@@ -1,0 +1,16 @@
+# Entornos virtuales
+venv/
+.venv/
+env/
+
+# Caché y temporales
+__pycache__/
+*.pyc
+cache_ocr_dni/
+scratch/
+uploads_quinta/
+logs_iniciar.txt
+
+# OS
+.DS_Store
+Thumbs.db

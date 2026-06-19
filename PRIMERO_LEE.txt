@@ -1,0 +1,59 @@
+╔═══════════════════════════════════════════════════════════════════════╗
+║                                                                       ║
+║   SISTEMA DE ADMINISTRACIÓN PERSONAL — DJ QUINTA CATEGORÍA           ║
+║   People Analytics USIL                                              ║
+║                                                                       ║
+╚═══════════════════════════════════════════════════════════════════════╝
+
+
+📌 PRIMERA VEZ EN ESTA PC? LEE ESTO:
+
+┌─────────────────────────────────────────────────────────────────────┐
+│ PASO 1: INSTALAR PYTHON (5 minutos)                                 │
+└─────────────────────────────────────────────────────────────────────┘
+
+  1. Abre: https://www.python.org/downloads/
+  2. Descarga Python 3.10 o más reciente
+  3. Ejecuta el instalador
+  
+  ⚠️  IMPORTANTE: Marca la opción "Add Python to PATH"
+  
+  4. Reinicia la terminal cuando termine
+
+
+┌─────────────────────────────────────────────────────────────────────┐
+│ PASO 2: PREPARAR EL SISTEMA (2-5 minutos)                          │
+└─────────────────────────────────────────────────────────────────────┘
+
+  Haz DOBLE CLIC en:  INSTALAR.bat
+  
+  • Esto crea el entorno virtual (venv)
+  • Instala todas las dependencias necesarias
+  • Verifica que todo esté listo
+  
+  ⏳ Espera a que termine (puede tardar)
+  
+
+┌─────────────────────────────────────────────────────────────────────┐
+│ PASO 3: INICIAR LA APLICACIÓN                                      │
+└─────────────────────────────────────────────────────────────────────┘
+
+  Opción A (Recomendada):
+    → Haz DOBLE CLIC en: INICIAR.vbs
+    → Se abrirá automáticamente en http://localhost:5010
+
+  Opción B (Si INICIAR.vbs no funciona):
+    → Haz DOBLE CLIC en: launcher.py
+    → Mostrará diagnóstico automático
+
+
+┌─────────────────────────────────────────────────────────────────────┐
+│ ¿ALGO NO FUNCIONA?                                                  │
+└─────────────────────────────────────────────────────────────────────┘
+
+  Ejecuta DIAGNOSTICO.bat para verificar todo
+
+
+╔═══════════════════════════════════════════════════════════════════════╗
+║  MÁS AYUDA: Lee README.md en esta carpeta                            ║
+╚═══════════════════════════════════════════════════════════════════════╝

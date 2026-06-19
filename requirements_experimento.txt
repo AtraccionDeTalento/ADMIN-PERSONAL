@@ -1,0 +1,10 @@
+# Dependencias para experimento.py — Motor experimental OCR
+# Instalar con: pip install -r requirements_experimento.txt
+
+paddlepaddle>=2.5.0
+paddleocr>=2.7.0
+opencv-python>=4.8.0
+rapidfuzz>=3.0.0
+openpyxl>=3.1.0
+PyMuPDF>=1.23.0
+numpy>=1.24.0

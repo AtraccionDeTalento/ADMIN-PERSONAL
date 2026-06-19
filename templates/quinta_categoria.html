@@ -1,0 +1,2115 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistemas de Administración Personal | USIL People Analytics</title>
+    <style>
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --azul-oscuro:  #1a237e;
+            --azul:         #3f51b5;
+            --azul-medio:   #283593;
+            --verde:        #2e7d32;
+            --bg:           #f0f2f5;
+            --card-shadow:  0 2px 12px rgba(26,35,126,.10);
+            --radius:       12px;
+        }
+
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: #333; min-height: 100vh; }
+        
+        .module-switcher {
+            display: flex; gap: 10px; margin-bottom: 24px;
+        }
+        .mod-btn {
+            padding: 12px 24px; border: none; border-radius: var(--radius);
+            font-size: 14px; font-weight: 700; cursor: pointer;
+            background: white; color: #666; box-shadow: 0 2px 8px rgba(0,0,0,.05);
+            transition: all .2s; border-bottom: 3px solid transparent;
+        }
+        .mod-btn.active {
+            color: var(--azul-oscuro);
+            border-bottom-color: var(--azul);
+            box-shadow: 0 4px 12px rgba(26,35,126,.15);
+        }
+        .mod-btn:hover:not(.active) { background: #f5f7ff; color: var(--azul); }
+        .module-view { display: none; }
+        .module-view.active { display: block; }
+
+        /* ── HEADER ────────────────────────────────────────────────────────── */
+        .header {
+            background: linear-gradient(135deg, var(--azul-oscuro) 0%, var(--azul-medio) 100%);
+            color: white;
+            padding: 16px 32px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            box-shadow: 0 2px 10px rgba(0,0,0,.22);
+        }
+        .header-icon { font-size: 26px; flex-shrink: 0; }
+        .header h1  { font-size: 19px; font-weight: 700; }
+        .header .sub { font-size: 12px; opacity: .72; margin-top: 2px; }
+        .header .badge {
+            margin-left: auto;
+            background: rgba(255,255,255,.15);
+            border-radius: 8px;
+            padding: 5px 14px;
+            font-size: 11.5px;
+            font-weight: 700;
+            letter-spacing: .4px;
+            white-space: nowrap;
+        }
+        .btn-restart {
+            background: rgba(255,255,255,.1);
+            border: 1.5px solid rgba(255,255,255,.3);
+            color: white;
+            padding: 6px 14px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all .2s;
+            margin-left: auto;
+        }
+        .btn-restart:hover {
+            background: rgba(255,255,255,.2);
+            border-color: rgba(255,255,255,.5);
+        }
+
+        .container { max-width: 1100px; margin: 24px auto; padding: 0 22px; }
+
+        /* ── CARD ──────────────────────────────────────────────────────────── */
+        .card {
+            background: white;
+            border-radius: var(--radius);
+            box-shadow: var(--card-shadow);
+            margin-bottom: 18px;
+            overflow: hidden;
+        }
+        .card-header {
+            padding: 16px 24px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .card-header h2 { font-size: 15px; font-weight: 700; color: var(--azul-oscuro); }
+
+        /* ── MÉTODO TABS ───────────────────────────────────────────────────── */
+        .method-card { border-top: 4px solid var(--azul); }
+
+        .method-tabs {
+            display: flex;
+            gap: 0;
+            padding: 18px 24px 0;
+        }
+        .method-tab {
+            padding: 9px 18px;
+            border: 1.5px solid #d0d5e8;
+            border-bottom: none;
+            background: #f5f7ff;
+            color: #888;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            border-radius: 8px 8px 0 0;
+            margin-right: 4px;
+            transition: all .2s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .method-tab.active {
+            background: white;
+            color: var(--azul);
+            border-color: var(--azul);
+            border-bottom: 2px solid white;
+            margin-bottom: -2px;
+            z-index: 1;
+            position: relative;
+        }
+        .method-tab:hover:not(.active) { color: var(--azul); background: #eef0fb; }
+        .method-tab .pill {
+            background: var(--azul-oscuro);
+            color: white;
+            border-radius: 10px;
+            font-size: 9px;
+            padding: 1px 7px;
+            font-weight: 700;
+            letter-spacing: .3px;
+        }
+        .method-tab.active .pill { background: var(--azul); }
+
+        .method-body {
+            padding: 22px 24px 20px;
+            border-top: 2px solid #e8eaf6;
+        }
+        .method-panel { display: none; }
+        .method-panel.active { display: block; }
+
+        /* ── CARPETA INPUT ─────────────────────────────────────────────────── */
+        .carpeta-hint {
+            font-size: 12px; color: #888; margin-bottom: 12px; line-height: 1.65;
+        }
+        .carpeta-hint code {
+            background: #f5f5f5;
+            padding: 1px 7px; border-radius: 4px;
+            font-size: 11.5px; color: #444;
+            font-family: 'Consolas', monospace;
+        }
+        .carpeta-row {
+            display: flex;
+            gap: 10px;
+            align-items: stretch;
+        }
+        .carpeta-input-wrap {
+            flex: 1;
+            position: relative;
+        }
+        .carpeta-input {
+            width: 100%;
+            padding: 11px 14px;
+            border: 2px solid #c5cae9;
+            border-radius: 8px;
+            font-size: 13px;
+            font-family: 'Consolas', monospace;
+            transition: border-color .2s, box-shadow .2s;
+            color: #333;
+        }
+        .carpeta-input:focus {
+            outline: none;
+            border-color: var(--azul);
+            box-shadow: 0 0 0 3px rgba(63,81,181,.12);
+        }
+        .carpeta-input::placeholder { color: #c0c0c0; font-family: 'Segoe UI', sans-serif; font-style: italic; }
+
+        /* Dropdown historial rutas recientes */
+        .historial-dropdown {
+            display: none;
+            position: absolute;
+            top: calc(100% + 4px);
+            left: 0; right: 0;
+            background: white;
+            border: 1.5px solid #c5cae9;
+            border-radius: 8px;
+            box-shadow: 0 6px 20px rgba(26,35,126,.12);
+            z-index: 999;
+            overflow: hidden;
+        }
+        .historial-dropdown.visible { display: block; }
+        .historial-header {
+            padding: 7px 12px;
+            font-size: 10.5px;
+            font-weight: 700;
+            color: #999;
+            letter-spacing: .4px;
+            text-transform: uppercase;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .historial-header button {
+            background: none; border: none; color: #bbb; font-size: 11px;
+            cursor: pointer; padding: 0 4px; line-height: 1;
+        }
+        .historial-header button:hover { color: #e53935; }
+        .historial-item {
+            display: flex;
+            align-items: center;
+            padding: 9px 12px;
+            cursor: pointer;
+            font-size: 12.5px;
+            font-family: 'Consolas', monospace;
+            color: #444;
+            transition: background .15s;
+            gap: 8px;
+        }
+        .historial-item:hover { background: #f5f7ff; color: var(--azul); }
+        .historial-item .hi-icon { font-size: 14px; flex-shrink: 0; opacity: .6; }
+        .historial-item .hi-path { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .historial-item .hi-del {
+            flex-shrink: 0; background: none; border: none;
+            color: #ccc; font-size: 13px; cursor: pointer; padding: 0 2px; line-height: 1;
+        }
+        .historial-item .hi-del:hover { color: #e53935; }
+
+        /* ── RUTAS TEXTAREA ────────────────────────────────────────────────── */
+        .ruta-textarea {
+            width: 100%;
+            min-height: 110px;
+            padding: 11px 14px;
+            border: 2px solid #c5cae9;
+            border-radius: 8px;
+            font-size: 13px;
+            font-family: 'Consolas', monospace;
+            resize: vertical;
+            transition: border-color .2s, box-shadow .2s;
+            line-height: 1.7;
+            color: #333;
+        }
+        .ruta-textarea:focus {
+            outline: none;
+            border-color: var(--azul);
+            box-shadow: 0 0 0 3px rgba(63,81,181,.12);
+        }
+        .ruta-textarea::placeholder { color: #c0c0c0; font-style: italic; }
+        .ruta-actions { display: flex; gap: 10px; margin-top: 11px; align-items: center; }
+        .ruta-counter { margin-left: auto; font-size: 12px; color: #999; }
+        .ruta-counter strong { color: var(--azul); }
+
+        /* ── UPLOAD ZONE ───────────────────────────────────────────────────── */
+        .upload-zone {
+            border: 2px dashed #c5cae9;
+            border-radius: 10px;
+            padding: 32px 24px;
+            text-align: center;
+            cursor: pointer;
+            transition: all .25s;
+        }
+        .upload-zone:hover, .upload-zone.dragover {
+            border-color: var(--azul);
+            background: #eef0fb;
+        }
+        .upload-zone .icon { font-size: 36px; margin-bottom: 10px; }
+        .upload-zone h3 { font-size: 15px; color: var(--azul-oscuro); margin-bottom: 5px; }
+        .upload-zone p { font-size: 12.5px; color: #999; }
+        .upload-zone input[type="file"] { display: none; }
+
+        /* ── BUTTONS ───────────────────────────────────────────────────────── */
+        .btn {
+            padding: 9px 20px;
+            border: none; border-radius: 8px;
+            font-size: 13px; cursor: pointer;
+            font-weight: 600; transition: all .2s;
+            display: inline-flex; align-items: center; gap: 6px;
+            white-space: nowrap;
+        }
+        .btn:disabled { opacity: .5; cursor: not-allowed; }
+        .btn-primary  { background: var(--azul); color: white; }
+        .btn-primary:hover:not(:disabled) { background: #303f9f; transform: translateY(-1px); box-shadow: 0 3px 10px rgba(63,81,181,.3); }
+        .btn-success  { background: var(--verde); color: white; }
+        .btn-success:hover:not(:disabled) { background: #1b5e20; }
+        .btn-outline  { background: white; color: var(--azul); border: 1.5px solid var(--azul); }
+        .btn-outline:hover:not(:disabled) { background: #eef0fb; }
+        .btn-ghost    { background: white; color: #b71c1c; border: 1.5px solid #ef9a9a; font-size: 12px; padding: 7px 13px; }
+        .btn-ghost:hover { background: #ffebee; }
+
+        /* ── TIMER / PROGRESO ──────────────────────────────────────────────── */
+        .processing-box {
+            display: none;
+            background: #1a237e;
+            border-radius: 10px;
+            padding: 16px 22px;
+            margin-bottom: 18px;
+            color: white;
+        }
+        .processing-box.active { display: flex; align-items: center; gap: 18px; }
+
+        .spinner {
+            width: 28px; height: 28px;
+            border: 3px solid rgba(255,255,255,.25);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin .75s linear infinite;
+            flex-shrink: 0;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .processing-info { flex: 1; }
+        .processing-label { font-size: 13px; font-weight: 600; margin-bottom: 5px; opacity: .9; }
+        .processing-bar-wrap { background: rgba(255,255,255,.2); border-radius: 6px; height: 6px; overflow: hidden; }
+        .processing-bar-fill {
+            height: 100%;
+            background: white;
+            border-radius: 6px;
+            width: 0%;
+            transition: width .4s ease;
+        }
+
+        .timer-display {
+            text-align: right;
+            flex-shrink: 0;
+        }
+        .timer-value {
+            font-size: 24px;
+            font-weight: 700;
+            letter-spacing: -.5px;
+            font-feature-settings: 'tnum';
+            font-variant-numeric: tabular-nums;
+        }
+        .timer-label { font-size: 10px; opacity: .65; text-transform: uppercase; letter-spacing: .5px; }
+
+        /* ── STATS ─────────────────────────────────────────────────────────── */
+        .stats-row {
+            display: none;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 12px;
+            margin-bottom: 18px;
+        }
+        .stats-row.active { display: grid; }
+        .stat-card {
+            background: white;
+            border-radius: 10px;
+            padding: 15px 12px;
+            text-align: center;
+            box-shadow: 0 1px 6px rgba(0,0,0,.07);
+            border-top: 3px solid #ccc;
+        }
+        .stat-card .number { font-size: 28px; font-weight: 800; line-height: 1; font-variant-numeric: tabular-nums; }
+        .stat-card .label  { font-size: 11px; color: #888; margin-top: 5px; }
+        .stat-card .extra  { font-size: 10px; color: #bbb; margin-top: 2px; }
+
+        /* ── LEGEND ────────────────────────────────────────────────────────── */
+        .legend {
+            display: none;
+            background: white;
+            border-radius: var(--radius);
+            padding: 16px 22px;
+            margin-bottom: 18px;
+            box-shadow: 0 1px 4px rgba(0,0,0,.07);
+        }
+        .legend.active { display: block; }
+        .legend h3 { font-size: 12.5px; font-weight: 700; color: var(--azul-oscuro); margin-bottom: 10px; }
+        .legend-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 8px; }
+        .legend-item { display: flex; align-items: flex-start; gap: 10px; font-size: 12px; }
+        .legend-item .badge { flex-shrink: 0; min-width: 32px; text-align: center; }
+        .legend-item .desc  { color: #666; line-height: 1.4; }
+
+        /* ── RESULTS ───────────────────────────────────────────────────────── */
+        .results-section { display: none; background: white; border-radius: var(--radius); box-shadow: var(--card-shadow); overflow: hidden; margin-bottom: 24px; }
+        .results-section.active { display: block; }
+
+        /* ── FILTER CHIPS ──────────────────────────────────────────────────── */
+        .filter-bar { padding: 12px 22px; border-bottom: 1px solid #f0f0f0; display: flex; gap: 7px; flex-wrap: wrap; align-items: center; }
+        .filter-bar .lbl { font-size: 11.5px; color: #bbb; font-weight: 600; }
+        .chip {
+            padding: 4px 13px; border-radius: 14px; font-size: 12px;
+            cursor: pointer; border: 1.5px solid #e0e0e0;
+            background: white; transition: all .18s; font-weight: 500;
+        }
+        .chip.active { background: var(--azul); color: white; border-color: var(--azul); }
+        .chip:hover:not(.active) { border-color: var(--azul); color: var(--azul); }
+
+        /* ── TABLE ─────────────────────────────────────────────────────────── */
+        table { width: 100%; border-collapse: collapse; }
+        thead th {
+            padding: 10px 14px; text-align: left;
+            font-size: 10.5px; font-weight: 700;
+            color: #666; text-transform: uppercase;
+            letter-spacing: .5px; background: #fafafa;
+            border-bottom: 1px solid #e8e8e8;
+        }
+        tbody td { padding: 10px 14px; font-size: 13px; border-bottom: 1px solid #f5f5f5; vertical-align: middle; }
+        tbody tr:hover { background: #f5f7ff; }
+        .nombre-col { font-weight: 700; color: var(--azul-oscuro); }
+        .persona-col { font-size: 12px; color: #555; }
+
+        .badge {
+            display: inline-block;
+            padding: 3px 11px; border-radius: 12px;
+            font-size: 11px; font-weight: 700; color: white;
+        }
+        .badge-1A { background: #2196F3; }
+        .badge-1B { background: #4CAF50; }
+        .badge-2  { background: #FF9800; }
+        .badge-3  { background: #F44336; }
+        .badge-error   { background: #9E9E9E; }
+        .badge-warning { background: #FFC107; color: #333; }
+
+        .conf-bar { display: inline-flex; align-items: center; gap: 6px; }
+        .conf-bar .track { width: 52px; height: 5px; background: #e8e8e8; border-radius: 3px; overflow: hidden; }
+        .conf-bar .track .fill { height: 100%; border-radius: 3px; }
+        .conf-bar .pct { font-size: 11px; color: #aaa; }
+
+        .dni-doc-num {
+            font-family: 'Consolas', monospace;
+            font-size: 12px;
+            font-weight: 700;
+            color: #1a237e;
+            background: #e8eaf6;
+            padding: 2px 7px;
+            border-radius: 5px;
+            cursor: default;
+            border: 1px solid #c5cae9;
+        }
+
+        .badge-termino {
+            display: inline-block;
+            font-size: 9px;
+            font-weight: 600;
+            color: #6a1b9a;
+            background: #f3e5f5;
+            border: 1px solid #ce93d8;
+            padding: 2px 6px;
+            border-radius: 4px;
+            white-space: nowrap;
+        }
+
+        .empty-state { padding: 48px; text-align: center; color: #ccc; font-size: 14px; }
+
+        /* ── TOAST ─────────────────────────────────────────────────────────── */
+        .toast {
+            position: fixed; bottom: 26px; right: 26px;
+            background: #323232; color: white;
+            padding: 12px 22px; border-radius: 8px;
+            font-size: 13px; font-weight: 500;
+            box-shadow: 0 4px 18px rgba(0,0,0,.22);
+            transform: translateY(80px);
+            opacity: 0; transition: all .3s; z-index: 9999;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .toast.show  { transform: translateY(0); opacity: 1; }
+        .toast.ok    { background: var(--verde); }
+        .toast.error { background: #c62828; }
+
+        @media (max-width: 768px) {
+            .container { padding: 0 12px; }
+            .stats-row { grid-template-columns: repeat(3, 1fr); }
+            .carpeta-row { flex-direction: column; }
+            .method-tabs { overflow-x: auto; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <div class="header-icon">&#128196;</div>
+    <div>
+        <h1>Sistema de Administración Personal</h1>
+        <div class="sub">Módulos de Gestión Documental y Renta Quinta &mdash; USIL People Analytics</div>
+    </div>
+    <button class="btn-restart" onclick="reiniciarSistema()" title="Reiniciar servidor">&#128260; Reiniciar</button>
+    <div class="badge">People Analytics USIL</div>
+</div>
+
+<div class="container">
+
+    <!-- ══ MODULE SWITCHER ═══════════════════════════════════════════════════ -->
+    <div class="module-switcher mb-4" style="justify-content: center; margin-bottom: 30px;">
+        <button class="mod-btn active" onclick="switchModule('dual', this)" style="padding: 14px 40px; font-size: 15px; background: white; border-radius: 30px; box-shadow: 0 4px 15px rgba(124, 77, 255, 0.2);">
+            &#128225; Procesamiento Dual (Oferta + Quinta)
+        </button>
+        <button class="mod-btn" onclick="switchModule('f118', this)" style="padding: 14px 40px; font-size: 15px; background: white; border-radius: 30px; box-shadow: 0 4px 15px rgba(0, 105, 92, 0.2);">
+            &#128203; Extractor F-118 DTP
+        </button>
+    </div>
+
+    <div class="module-view" id="module-quinta">
+    
+    <!-- ══ INPUT METHODS ═══════════════════════════════════════════════════ -->
+    <div class="card method-card">
+
+        <div class="method-tabs">
+            <button class="method-tab active" data-tab="carpeta" onclick="switchTab('carpeta', this)">
+                &#128193; Examinar Carpeta
+                <span class="pill">RECOMENDADO</span>
+            </button>
+            <button class="method-tab" data-tab="rutas" onclick="switchTab('rutas', this)">
+                &#128203; Pegar Rutas
+            </button>
+            <button class="method-tab" data-tab="archivos" onclick="switchTab('archivos', this)">
+                &#128229; Subir Archivos
+            </button>
+        </div>
+
+        <div class="method-body">
+
+            <!-- TAB: CARPETA ─────────────────────────────────────────────── -->
+            <div class="method-panel active" id="panel-carpeta">
+                <div class="carpeta-hint">
+                    Pega la ruta de la carpeta que contiene las declaraciones juradas.<br>
+                    El sistema escanea <strong>todas las subcarpetas</strong> de forma automatica y en paralelo.<br>
+                    Ejemplo:&nbsp; <code>C:\RRHH\DJ_Quinta_2026</code> &nbsp;&nbsp;o&nbsp;&nbsp; <code>C:\Users\pepita\Downloads\ARCHIVOS DE PRUEBA</code>
+                </div>
+                <div class="carpeta-row">
+                    <div class="carpeta-input-wrap">
+                        <input
+                            type="text"
+                            id="carpetaInput"
+                            class="carpeta-input"
+                            placeholder="C:\Ruta\a\la\carpeta con declaraciones..."
+                            list="rutasRecientes"
+                            autocomplete="off"
+                            onkeydown="if(event.key==='Enter') escanearCarpeta()"
+                            onfocus="mostrarHistorial()"
+                            oninput="mostrarHistorial()"
+                        />
+                        <datalist id="rutasRecientes"></datalist>
+                        <div class="historial-dropdown" id="historialDropdown">
+                            <div class="historial-header">
+                                Recientes
+                                <button onclick="borrarHistorial(event)" title="Borrar historial">&#10005; Limpiar todo</button>
+                            </div>
+                            <div id="historialLista"></div>
+                        </div>
+                    </div>
+                    <button class="btn btn-ghost" id="btnExaminar" onclick="seleccionarCarpetaNativa('carpetaInput')" title="Abrir explorador de carpetas">
+                        &#128193; Examinar...
+                    </button>
+                    <button class="btn btn-primary" id="btnCarpeta" onclick="escanearCarpeta()">
+                        &#128269; Escanear Carpeta
+                    </button>
+                </div>
+            </div>
+
+            <!-- TAB: RUTAS ───────────────────────────────────────────────── -->
+            <div class="method-panel" id="panel-rutas">
+                <div class="carpeta-hint">
+                    Una ruta por linea. Acepta archivos individuales o carpetas (nivel superior).<br>
+                    Ejemplo archivo: <code>C:\RRHH\DJ_Quinta\Lopez_Juan.pdf</code> &nbsp;|&nbsp;
+                    Ejemplo carpeta: <code>C:\RRHH\DJ_Quinta\</code>
+                </div>
+                <textarea
+                    id="rutasInput"
+                    class="ruta-textarea"
+                    placeholder="C:\Users\...\Lopez_Juan.pdf&#10;C:\Users\...\Garcia_Maria.pdf&#10;-- o una carpeta: C:\Users\...\DJ_Quinta\"
+                    oninput="actualizarContador()"
+                    onpaste="setTimeout(actualizarContador, 50)"
+                ></textarea>
+                <div class="ruta-actions">
+                    <button class="btn btn-primary" id="btnRutas" onclick="procesarPorRutas()">
+                        &#9654; Procesar Rutas
+                    </button>
+                    <button class="btn btn-ghost" onclick="limpiarRutas()">&#10005; Limpiar</button>
+                    <span class="ruta-counter" id="rutaCounter">0 rutas detectadas</span>
+                </div>
+            </div>
+
+            <!-- TAB: ARCHIVOS ────────────────────────────────────────────── -->
+            <div class="method-panel" id="panel-archivos">
+                <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fileInput').click()">
+                    <div class="icon">&#128229;</div>
+                    <h3>Arrastra archivos PDF aqui</h3>
+                    <p>O haz clic para seleccionarlos &nbsp;&middot;&nbsp; <strong>Multiples archivos permitidos</strong></p>
+                    <input type="file" id="fileInput" accept=".pdf" multiple>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- ══ PROCESSING BOX (visible durante procesamiento) ════════════════════ -->
+    <div class="processing-box" id="processingBox">
+        <div class="spinner"></div>
+        <div class="processing-info">
+            <div class="processing-label" id="processingLabel">Procesando...</div>
+            <div class="processing-bar-wrap">
+                <div class="processing-bar-fill" id="processingFill"></div>
+            </div>
+        </div>
+        <div class="timer-display">
+            <div class="timer-value" id="timerValue">0.000<span style="font-size:14px;opacity:.6">s</span></div>
+            <div class="timer-label">Tiempo Transcurrido</div>
+        </div>
+    </div>
+
+    <!-- ══ LEGEND ════════════════════════════════════════════════════════════ -->
+    <div class="legend" id="legend">
+        <h3>Categorias de Clasificacion</h3>
+        <div class="legend-grid">
+            <div class="legend-item">
+                <span class="badge badge-1A">1A</span>
+                <span class="desc"><strong>Unico Empleador</strong> — Si percibio renta quinta antes de USIL</span>
+            </div>
+            <div class="legend-item">
+                <span class="badge badge-1B">1B</span>
+                <span class="desc"><strong>Unico Empleador</strong> — No percibio renta quinta antes de USIL</span>
+            </div>
+            <div class="legend-item">
+                <span class="badge badge-2">2</span>
+                <span class="desc"><strong>Empleador Principal</strong> — Percibe quinta en otras empresas</span>
+            </div>
+            <div class="legend-item">
+                <span class="badge badge-3">3</span>
+                <span class="desc"><strong>No es Empleador Principal</strong> — Sin retenciones USIL</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══ STATS ════════════════════════════════════════════════════════════ -->
+    <div class="stats-row" id="statsRow">
+        <div class="stat-card" style="border-top-color:#1a237e;">
+            <div class="number" id="statTotal" style="color:#1a237e">0</div>
+            <div class="label">Procesados</div>
+        </div>
+        <div class="stat-card" style="border-top-color:#2196F3;">
+            <div class="number" id="stat1A" style="color:#2196F3">0</div>
+            <div class="label">Cat. 1A</div>
+        </div>
+        <div class="stat-card" style="border-top-color:#4CAF50;">
+            <div class="number" id="stat1B" style="color:#4CAF50">0</div>
+            <div class="label">Cat. 1B</div>
+        </div>
+        <div class="stat-card" style="border-top-color:#FF9800;">
+            <div class="number" id="stat2" style="color:#FF9800">0</div>
+            <div class="label">Cat. 2</div>
+        </div>
+        <div class="stat-card" style="border-top-color:#F44336;">
+            <div class="number" id="stat3" style="color:#F44336">0</div>
+            <div class="label">Cat. 3</div>
+        </div>
+        <div class="stat-card" style="border-top-color:#9E9E9E;">
+            <div class="number" id="statErr" style="color:#9E9E9E">0</div>
+            <div class="label">Sin Cls. / Err.</div>
+        </div>
+        <div class="stat-card" style="border-top-color:#7c4dff;">
+            <div class="number" id="statTime" style="color:#7c4dff;font-size:18px;">—</div>
+            <div class="label">Tiempo Total</div>
+        </div>
+    </div>
+
+    <!-- ══ RESULTS TABLE ════════════════════════════════════════════════════ -->
+    <div class="results-section" id="resultsSection">
+        <div class="card-header">
+            <h2>&#9989; Resultados de Clasificacion</h2>
+            <div style="display:flex;gap:8px;">
+                <button class="btn btn-success" id="btnExcel" onclick="exportarExcel()">
+                    &#128202; Exportar Excel
+                </button>
+                <button class="btn btn-outline" onclick="resetTodo()">
+                    &#8635; Nueva Carga
+                </button>
+            </div>
+        </div>
+        <div class="filter-bar">
+            <span class="lbl">Filtrar:</span>
+            <div class="chip active" onclick="filtrar('all', this)">Todos</div>
+            <div class="chip" onclick="filtrar('1A', this)">Cat. 1A</div>
+            <div class="chip" onclick="filtrar('1B', this)">Cat. 1B</div>
+            <div class="chip" onclick="filtrar('2', this)">Cat. 2</div>
+            <div class="chip" onclick="filtrar('3', this)">Cat. 3</div>
+            <div class="chip" onclick="filtrar('warn', this)">Sin Clasificar</div>
+        </div>
+        <div style="overflow-x:auto;">
+            <table>
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Persona</th>
+                        <th>Nombre (Declaracion)</th>
+                        <th>Cat.</th>
+                        <th>Descripcion</th>
+                        <th>Confianza</th>
+                        <th>DNI Doc.</th>
+                        <th>Archivo</th>
+                    </tr>
+                </thead>
+                <tbody id="resultsBody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    </div> <!-- FIN MODULE QUINTA -->
+
+    <!-- ══ MODULE OFERTAS (SHAREPOINT) ═══════════════════════════════════════ -->
+    <div class="module-view" id="module-ofertas">
+        <!-- Dashboard Ofertas -->
+        <div class="stats-row active" style="margin-bottom: 18px;">
+            <div class="stat-card" style="border-top-color:#1a237e;">
+                <div class="number" id="spTotalBandeja" style="color:#1a237e">12</div>
+                <div class="label">Bandeja SP</div>
+            </div>
+            <div class="stat-card" style="border-top-color:#4CAF50;">
+                <div class="number" id="spProcesadas" style="color:#4CAF50">0</div>
+                <div class="label">Procesadas Hoy</div>
+            </div>
+            <div class="stat-card" style="border-top-color:#FF9800;">
+                <div class="number" id="spConBono" style="color:#FF9800">0</div>
+                <div class="label">Con Bonos / Especiales</div>
+            </div>
+            <div class="stat-card" style="border-top-color:#2196F3;">
+                <div class="number" id="spRegulares" style="color:#2196F3">0</div>
+                <div class="label">Contratos Regulares</div>
+            </div>
+            <div class="stat-card" style="border-top-color:#F44336;">
+                <div class="number" id="spErrores" style="color:#F44336">0</div>
+                <div class="label">Fallos API/OCR</div>
+            </div>
+        </div>
+
+        <div class="card method-card mb-4">
+            <div class="method-tabs">
+                <button class="method-tab active" onclick="switchTabOfertas('sp-carpeta', this)">
+                    &#128193; Examinar Carpeta
+                    <span class="pill">RECOMENDADO</span>
+                </button>
+                <button class="method-tab" onclick="switchTabOfertas('sp-rutas', this)">
+                    &#128203; Pegar Rutas
+                </button>
+                <button class="method-tab" onclick="switchTabOfertas('sp-archivos', this)">
+                    &#128229; Subir Archivos
+                </button>
+            </div>
+
+            <div class="method-body">
+                <!-- TAB: CARPETA SP ────────────────────────────────────────── -->
+                <div class="method-panel active" id="panel-sp-carpeta">
+                    <div class="carpeta-hint">
+                        Pega la ruta de la carpeta raíz de OneDrive (Data de Prueba).<br>
+                        El sistema detectará automáticamente las carpetas de personas y extraerá sus cartas oferta.
+                    </div>
+                    <div class="carpeta-row">
+                        <input type="text" id="spRutaOrigen" class="carpeta-input" placeholder="Ruta origen..." value="">
+                        <button class="btn btn-primary" id="btnProcesarSP" onclick="simularProcesamientoSP()">
+                            &#128188; Iniciar Movimiento y Triage Automático
+                        </button>
+                    </div>
+                    <div style="margin-top:20px; padding:15px; background:#f8f9ff; border-radius:10px; border:1.5px solid #e0e6ff;">
+                        <label style="font-size:12px; font-weight:bold; color:var(--azul-oscuro); display:block; margin-bottom:8px;">&#128205; ELIGE DONDE VAN A LLEGAR LAS CARTAS OFERTAS:</label>
+                        <input type="text" id="spRutaDestino" style="width:100%; padding:10px; border:2px solid var(--azul); border-radius:8px; font-size:12px; font-family:'Consolas', monospace; color:var(--azul-oscuro);" value="">
+                    </div>
+                </div>
+
+                <!-- TAB: RUTAS SP ──────────────────────────────────────────── -->
+                <div class="method-panel" id="panel-sp-rutas">
+                    <div class="carpeta-hint">
+                        Pega las rutas completas de los archivos PDF de cartas oferta (una por línea).
+                    </div>
+                    <textarea id="spRutasInput" class="ruta-textarea" placeholder="C:\Users\...\Carta_Oferta_Persona1.pdf&#10;C:\Users\...\Carta_Oferta_Persona2.pdf"></textarea>
+                    <div class="ruta-actions">
+                        <button class="btn btn-primary" onclick="procesarOfertasPorRutas()">
+                            &#9654; Procesar Rutas
+                        </button>
+                    </div>
+                </div>
+
+                <!-- TAB: ARCHIVOS SP ───────────────────────────────────────── -->
+                <div class="method-panel" id="panel-sp-archivos">
+                    <div class="upload-zone" onclick="document.getElementById('fileInputOfertas').click()">
+                        <div class="icon">&#128188;</div>
+                        <h3>Arrastra tus Cartas Oferta aquí</h3>
+                        <p>O haz clic para seleccionarlas individualmente</p>
+                        <input type="file" id="fileInputOfertas" accept=".pdf" multiple onchange="procesarArchivosSubidosOfertas(this.files)" style="display:none;">
+                    </div>
+                </div>
+            </div>
+
+            <div style="padding: 0 20px 20px 20px;">
+                <div style="background: #1e1e1e; color: #00ff00; font-family: 'Consolas', monospace; font-size: 11.5px; padding: 12px; border-radius: 8px; height: 160px; overflow-y: auto;" id="spTerminal">
+                    > Consola de Triage: Listo para procesar.<br>
+                </div>
+            </div>
+        </div>
+
+        <div class="results-section active" style="margin-bottom: 24px; box-shadow: var(--card-shadow);">
+            <div class="card-header">
+                <h2>&#128193; Trazabilidad de Movimientos en SharePoint</h2>
+                <div style="display:flex; gap:8px;">
+                    <button class="btn btn-success" id="btnExcelOfertas" onclick="exportarExcelOfertas()">
+                        &#128202; Exportar Excel
+                    </button>
+                    <div style="font-size: 11px; color: #888; align-self:center;">Registro Transaccional (PostgreSQL)</div>
+                </div>
+            </div>
+            <div style="overflow-x:auto;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>UUID Doc.</th>
+                            <th>Archivo Origen</th>
+                            <th>Hallazgos Triage</th>
+                            <th>Ruta Destino</th>
+                            <th>Estado Mover</th>
+                            <th>Fecha/Hora</th>
+                        </tr>
+                    </thead>
+                    <tbody id="spResultsBody">
+                        <tr><td colspan="6" class="empty-state">No se ha ejecutado el motor de procesamiento aún.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div> <!-- FIN MODULE OFERTAS -->
+
+    <!-- ══ MODULE DUAL (OFERTA + QUINTA) ══════════════════════════════════════ -->
+    <div class="module-view active" id="module-dual">
+        <div class="card method-card mb-4" style="border-top-color: #7c4dff; background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(10px); border: 1px solid rgba(124, 77, 255, 0.1);">
+            <div class="card-header" style="background: linear-gradient(135deg, #fdfbff 0%, #f3e5f5 100%); padding: 20px 24px;">
+                <div style="display:flex; align-items:center; gap:12px;">
+                    <span style="font-size:28px; filter: drop-shadow(0 2px 4px rgba(124, 77, 255, 0.3));">&#128225;</span>
+                    <div>
+                        <h2 style="color:#4a148c; font-size:18px; letter-spacing: -0.5px;">Procesamiento Dual: Carta Oferta + DJ Quinta</h2>
+                        <p style="font-size:11px; color:#8e24aa; opacity:0.8; font-weight: 600;">Extracción de DNI, Triage de Beneficios y Organización de Expedientes</p>
+                    </div>
+                </div>
+                <div class="badge" style="background: linear-gradient(90deg, #7c4dff, #6200ea); color:white; font-size:10px; padding: 6px 14px; border-radius: 20px; box-shadow: 0 2px 8px rgba(124, 77, 255, 0.3);">MOTOR V2.0 - IA READY</div>
+            </div>
+            <div class="method-body">
+                <div class="carpeta-hint" style="background:#f3e5f5; border-left:4px solid #7c4dff; padding:12px; border-radius:4px; color:#4a148c; margin-bottom:20px;">
+                    Este motor automatizado escanea las carpetas de los colaboradores, identifica los documentos contractuales y tributarios, 
+                    realiza **OCR de alta precisión** para extraer el DNI y genera un reporte de beneficios (bonos, movilidad, etc).
+                </div>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px;">
+                    <div class="path-selector">
+                        <label style="font-size:12px; font-weight:700; color:#4a148c; display:flex; align-items:center; gap:6px; margin-bottom:10px;">
+                            <span style="font-size:16px;">&#128193;</span> CARPETA ORIGEN (Colaboradores)
+                        </label>
+                        <div style="position:relative; display:flex; gap:10px;">
+                            <div style="position:relative; flex:1;">
+                                <input type="text" id="dualRutaOrigen" class="carpeta-input" style="width:100%; padding-left:40px; border-color:#d1c4e9; height: 46px; border-radius: 12px; background: rgba(255,255,255,0.5);" placeholder="Selecciona la ruta de origen..." value="">
+                                <span style="position:absolute; left:14px; top:13px; color:#7c4dff; font-size:14px;">&#128269;</span>
+                            </div>
+                            <button class="btn btn-primary" onclick="seleccionarCarpetaNativa('dualRutaOrigen')" style="padding:0 15px; border-radius:12px; background: #7c4dff; box-shadow: 0 4px 10px rgba(124, 77, 255, 0.2);" title="Seleccionar carpeta en Windows">
+                                <span style="font-size:20px;">&#128193;</span>
+                            </button>
+                        </div>
+                        <p style="font-size:10px; color:#9c27b0; margin-top:6px; font-style:italic; opacity: 0.7;">Directorio donde están las subcarpetas individuales.</p>
+                    </div>
+
+                    <div class="path-selector">
+                        <label style="font-size:12px; font-weight:700; color:#4a148c; display:flex; align-items:center; gap:6px; margin-bottom:10px;">
+                            <span style="font-size:16px;">&#128194;</span> CARPETA DESTINO (Organizada)
+                        </label>
+                        <div style="position:relative; display:flex; gap:10px;">
+                            <div style="position:relative; flex:1;">
+                                <input type="text" id="dualRutaDestino" class="carpeta-input" style="width:100%; padding-left:40px; border-color:#d1c4e9; height: 46px; border-radius: 12px; background: rgba(255,255,255,0.5);" placeholder="Selecciona la ruta de destino..." value="">
+                                <span style="position:absolute; left:14px; top:13px; color:#7c4dff; font-size:14px;">&#128190;</span>
+                            </div>
+                            <button class="btn btn-primary" onclick="seleccionarCarpetaNativa('dualRutaDestino')" style="padding:0 15px; border-radius:12px; background: #7c4dff; box-shadow: 0 4px 10px rgba(124, 77, 255, 0.2);" title="Seleccionar carpeta en Windows">
+                                <span style="font-size:20px;">&#128193;</span>
+                            </button>
+                        </div>
+                        <p style="font-size:10px; color:#9c27b0; margin-top:6px; font-style:italic; opacity: 0.7;">Donde se crearán los expedientes organizados.</p>
+                    </div>
+                </div>
+
+                <div style="text-align: center; background: #fafafa; padding: 20px; border-radius: 12px; border: 1px dashed #d1c4e9;">
+                    <button class="btn btn-primary" id="btnProcesarDual" onclick="ejecutarProcesamientoDual()" style="padding: 16px 48px; font-size: 16px; background: linear-gradient(135deg, #7c4dff 0%, #6200ea 100%); border-radius: 30px; box-shadow: 0 4px 15px rgba(124, 77, 255, 0.4);">
+                        <span style="font-size:18px; margin-right:8px;">&#128640;</span> Iniciar Procesamiento Masivo
+                    </button>
+                    <div style="margin-top:10px; font-size:11px; color:#777;">Procesamiento asíncrono con hilos paralelos (Multi-threading)</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECCIÓN DE PROGRESO REAL-TIME -->
+        <div id="dualProgressContainer" style="display:none; margin-bottom:24px;">
+            <div class="card" style="padding:24px; background:#1a237e; color:white; border-radius:16px; box-shadow:0 8px 32px rgba(26,35,126,0.3);">
+                <div style="display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:15px;">
+                    <div>
+                        <div style="font-size:12px; opacity:0.8; text-transform:uppercase; letter-spacing:1px; margin-bottom:4px;">Estado del Proceso</div>
+                        <div style="font-size:20px; font-weight:800;" id="dualProgressStatus">Iniciando motor...</div>
+                    </div>
+                    <div style="text-align:right;">
+                        <div style="font-size:12px; opacity:0.8;">Tiempo Restante Estimado</div>
+                        <div style="font-size:24px; font-weight:800; color:#00e5ff;" id="dualProgressETA">--:--</div>
+                    </div>
+                </div>
+
+                <div class="processing-bar-wrap" style="height:12px; background:rgba(255,255,255,0.15); border-radius:10px; margin-bottom:15px;">
+                    <div class="processing-bar-fill" id="dualProgressBar" style="width:0%; background:linear-gradient(90deg, #00e5ff, #7c4dff); box-shadow:0 0 15px rgba(0,229,255,0.5);"></div>
+                </div>
+
+                <div style="display:flex; justify-content:space-between; font-size:13px;">
+                    <div id="dualProgressCount">0 de 0 colaboradores</div>
+                    <div id="dualProgressPercent">0% completado</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="results-section active" id="dualResultsSection" style="display:none; border-radius:16px; overflow:hidden;">
+            <div class="card-header" style="background:#f5f5f5;">
+                <div style="display:flex; align-items:center; gap:10px;">
+                    <span style="font-size:20px;">&#128202;</span>
+                    <h2 style="font-size:15px;">Trazabilidad Detallada de Procesamiento</h2>
+                </div>
+                <div style="display:flex; gap:10px;">
+                    <button class="btn btn-success" onclick="exportarExcelDual()" style="border-radius:20px; padding:8px 20px;">
+                        &#128196; Descargar Reporte DNI (.xlsx)
+                    </button>
+                    <button class="btn btn-error" onclick="cerrarDualResults()" style="border-radius:20px; padding:8px 20px; background:#ff5252; color:white; border:none; cursor:pointer;">
+                        &#10006; Cerrar
+                    </button>
+                </div>
+            </div>
+            <div style="overflow-x:auto;">
+                <table style="border-spacing:0;">
+                    <thead>
+                        <tr style="background:#eee;">
+                            <th style="width:250px;">Colaborador</th>
+                            <th style="width:120px; text-align:center;">DNI</th>
+                            <th style="width:100px; text-align:center;">Categoría</th>
+                            <th>Carta Oferta</th>
+                            <th>DJ Quinta</th>
+                            <th style="text-align:center;">Estado</th>
+                            <th>Término Encontrado</th>
+                        </tr>
+                    </thead>
+                    <tbody id="dualResultsBody">
+                        <tr><td colspan="6" class="empty-state">Inicia el proceso para ver el detalle en tiempo real.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div> <!-- FIN MODULE DUAL -->
+
+    <!-- ══ MODULE F-118 DTP ══════════════════════════════════════════════════ -->
+    <div class="module-view" id="module-f118">
+        <div class="card method-card mb-4" style="border-top-color: #00695c; background: rgba(255,255,255,0.8); backdrop-filter: blur(10px); border: 1px solid rgba(0,105,92,0.1);">
+            <div class="card-header" style="background: linear-gradient(135deg, #f1f8f6 0%, #e0f2f1 100%); padding: 20px 24px;">
+                <div style="display:flex; align-items:center; gap:12px;">
+                    <span style="font-size:28px; filter: drop-shadow(0 2px 4px rgba(0,105,92,0.3));">&#128203;</span>
+                    <div>
+                        <h2 style="color:#00695c; font-size:18px; letter-spacing: -0.5px;">Extractor Masivo F-118-1 DTP</h2>
+                        <p style="font-size:11px; color:#00897b; opacity:0.8; font-weight: 600;">Lee archivos F_118_1_DTP.xlsx de cada colaborador y consolida todos los datos en un Excel</p>
+                    </div>
+                </div>
+                <div class="badge" style="background: linear-gradient(90deg, #00897b, #00695c); color:white; font-size:10px; padding: 6px 14px; border-radius: 20px; box-shadow: 0 2px 8px rgba(0,105,92,0.3);">8 HOJAS &middot; AUTOMÁTICO</div>
+            </div>
+            <div class="method-body">
+                <div class="carpeta-hint" style="background:#e0f2f1; border-left:4px solid #00695c; padding:12px; border-radius:4px; color:#004d40; margin-bottom:20px;">
+                    <strong>&#9889; Proceso 100% automático:</strong> Selecciona la carpeta raíz con las subcarpetas de colaboradores (ej: <code>DATOS DE PRUEBA</code>).<br>
+                    El sistema detecta los archivos <code>F_118_1_DTP.xlsx</code>, lee las <strong>8 hojas</strong> (Ficha de Datos, Pago de Haberes, Pensiones, DJ Tecnologías, Declaración Jurada, DDJJ 5TA, etc.) y extrae todos los datos automáticamente.
+                </div>
+
+                <div style="display:flex; gap:10px; align-items:stretch; margin-bottom:20px;">
+                    <div style="position:relative; flex:1;">
+                        <input type="text" id="f118CarpetaInput" class="carpeta-input" style="width:100%; padding-left:40px; border-color:#80cbc4; height:46px; border-radius:12px;" placeholder="C:\Ruta\a\la\carpeta\DATOS DE PRUEBA" onkeydown="if(event.key==='Enter') procesarF118()">
+                        <span style="position:absolute; left:14px; top:13px; color:#00897b; font-size:14px;">&#128269;</span>
+                    </div>
+                    <button class="btn btn-primary" onclick="seleccionarCarpetaNativa('f118CarpetaInput')" style="padding:0 15px; border-radius:12px; background:#00897b; box-shadow: 0 4px 10px rgba(0,105,92,0.2);" title="Examinar carpeta">
+                        <span style="font-size:20px;">&#128193;</span>
+                    </button>
+                    <button class="btn btn-primary" id="btnF118Procesar" onclick="procesarF118()" style="padding:12px 32px; border-radius:12px; background: linear-gradient(135deg, #00897b 0%, #00695c 100%); box-shadow: 0 4px 15px rgba(0,105,92,0.3); font-size:14px;">
+                        &#9889; Extraer Datos F-118
+                    </button>
+                </div>
+
+                <!-- Hojas detectadas info -->
+                <div id="f118HojasInfo" style="display:none; background:#fafafa; border-radius:10px; padding:14px 18px; margin-bottom:16px; border:1px solid #e0e0e0;">
+                    <div style="font-size:11px; font-weight:700; color:#00695c; text-transform:uppercase; letter-spacing:.5px; margin-bottom:8px;">Hojas detectadas en los archivos:</div>
+                    <div id="f118HojasList" style="display:flex; flex-wrap:wrap; gap:6px;"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Processing -->
+        <div id="f118ProcessingBox" style="display:none;" class="processing-box">
+            <div class="spinner"></div>
+            <div class="processing-info">
+                <div class="processing-label" id="f118ProcessingLabel">Leyendo archivos F-118...</div>
+                <div class="processing-bar-wrap"><div class="processing-bar-fill" id="f118ProcessingFill"></div></div>
+            </div>
+        </div>
+
+        <!-- Stats -->
+        <div id="f118StatsRow" class="stats-row" style="display:none;">
+            <div class="stat-card" style="border-top-color:#00695c;"><div class="number" id="f118StatTotal" style="color:#00695c">0</div><div class="label">Total</div></div>
+            <div class="stat-card" style="border-top-color:#2e7d32;"><div class="number" id="f118StatOK" style="color:#2e7d32">0</div><div class="label">Exitosos</div></div>
+            <div class="stat-card" style="border-top-color:#FF9800;"><div class="number" id="f118StatSin" style="color:#FF9800">0</div><div class="label">Sin Archivo</div></div>
+            <div class="stat-card" style="border-top-color:#F44336;"><div class="number" id="f118StatErr" style="color:#F44336">0</div><div class="label">Errores</div></div>
+            <div class="stat-card" style="border-top-color:#2196F3;"><div class="number" id="f118Stat1A" style="color:#2196F3">0</div><div class="label">Cat. 1A</div></div>
+            <div class="stat-card" style="border-top-color:#4CAF50;"><div class="number" id="f118Stat1B" style="color:#4CAF50">0</div><div class="label">Cat. 1B</div></div>
+            <div class="stat-card" style="border-top-color:#FF9800;"><div class="number" id="f118Stat2" style="color:#FF9800">0</div><div class="label">Cat. 2</div></div>
+            <div class="stat-card" style="border-top-color:#F44336;"><div class="number" id="f118Stat3" style="color:#F44336">0</div><div class="label">Cat. 3</div></div>
+        </div>
+
+        <!-- Results Table -->
+        <div id="f118ResultsSection" class="results-section" style="display:none; border-radius:16px; overflow:hidden; margin-bottom:24px;">
+            <div class="card-header" style="background:#f5f5f5;">
+                <div style="display:flex; align-items:center; gap:10px;">
+                    <span style="font-size:20px;">&#128202;</span>
+                    <h2 style="font-size:15px;">Datos Extraídos del Formulario F-118</h2>
+                </div>
+                <div style="display:flex; gap:10px;">
+                    <button class="btn btn-success" id="btnF118Excel" onclick="exportarExcelF118()" style="border-radius:20px; padding:8px 20px;">&#128196; Descargar Excel Consolidado</button>
+                    <button class="btn btn-outline" onclick="resetF118()" style="border-radius:20px; padding:8px 20px;">&#8635; Nueva Extracción</button>
+                </div>
+            </div>
+            <div style="overflow-x:auto;">
+                <table style="border-spacing:0;">
+                    <thead>
+                        <tr style="background:#eee;">
+                            <th>#</th>
+                            <th>Persona (Carpeta)</th>
+                            <th>Apellidos y Nombres</th>
+                            <th>DNI</th>
+                            <th>Correo</th>
+                            <th>Distrito</th>
+                            <th>Cat. 5ta</th>
+                            <th>Banco</th>
+                            <th>Hojas</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="f118ResultsBody">
+                        <tr><td colspan="10" class="empty-state">Selecciona una carpeta para iniciar la extracción.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div> <!-- FIN MODULE F-118 -->
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+    // ── Estado global ────────────────────────────────────────────────────────
+    let allResults  = [];
+    let lastResumen = {};
+
+    // ── Timer ────────────────────────────────────────────────────────────────
+    let _tStart    = 0;
+    let _tInterval = null;
+
+    function startTimer() {
+        _tStart = performance.now();
+        const el = document.getElementById('timerValue');
+        _tInterval = setInterval(() => {
+            const s = (performance.now() - _tStart) / 1000;
+            const disp = s < 60
+                ? s.toFixed(3) + '<span style="font-size:14px;opacity:.6">s</span>'
+                : Math.floor(s / 60) + '<span style="font-size:14px;opacity:.6">m </span>'
+                  + (s % 60).toFixed(2) + '<span style="font-size:14px;opacity:.6">s</span>';
+            el.innerHTML = disp;
+        }, 50);
+    }
+
+    function stopTimer() {
+        clearInterval(_tInterval);
+        const elapsed = (performance.now() - _tStart) / 1000;
+        const label   = elapsed < 60
+            ? elapsed.toFixed(3) + 's'
+            : Math.floor(elapsed / 60) + 'm ' + (elapsed % 60).toFixed(2) + 's';
+        document.getElementById('statTime').textContent = label;
+        return label;
+    }
+
+    // ── Tabs ─────────────────────────────────────────────────────────────────
+    function switchTab(name, btn) {
+        document.querySelectorAll('.method-tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.method-panel').forEach(p => p.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById('panel-' + name).classList.add('active');
+    }
+
+    // ── Mostrar / ocultar processing box ────────────────────────────────────
+    function showProcessing(label, pct) {
+        document.getElementById('processingLabel').textContent = label;
+        document.getElementById('processingFill').style.width  = (pct || 10) + '%';
+        document.getElementById('processingBox').classList.add('active');
+        startTimer();
+    }
+    function setFill(pct) {
+        document.getElementById('processingFill').style.width = pct + '%';
+    }
+    function hideProcessing() {
+        document.getElementById('processingBox').classList.remove('active');
+        return stopTimer();
+    }
+
+    function disableBtn(id, txt) {
+        const b = document.getElementById(id);
+        if (b) { b.disabled = true; b._orig = b.innerHTML; b.innerHTML = txt || 'Procesando...'; }
+    }
+    function enableBtn(id) {
+        const b = document.getElementById(id);
+        if (b) { b.disabled = false; b.innerHTML = b._orig || b.innerHTML; }
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // HISTORIAL DE RUTAS RECIENTES
+    // ─────────────────────────────────────────────────────────────────────────
+
+    const HISTORIAL_KEY = 'quinta_rutas_recientes';
+    const HISTORIAL_MAX = 8;
+
+    function leerHistorial() {
+        try { return JSON.parse(localStorage.getItem(HISTORIAL_KEY) || '[]'); }
+        catch { return []; }
+    }
+
+    function guardarRutaReciente(ruta) {
+        if (!ruta || ruta.trim().length < 3) return;
+        const lista = leerHistorial().filter(r => r !== ruta);
+        lista.unshift(ruta);
+        if (lista.length > HISTORIAL_MAX) lista.splice(HISTORIAL_MAX);
+        localStorage.setItem(HISTORIAL_KEY, JSON.stringify(lista));
+        renderDatalist();
+    }
+
+    function renderDatalist() {
+        const dl = document.getElementById('rutasRecientes');
+        if (!dl) return;
+        const lista = leerHistorial();
+        dl.innerHTML = lista.map(r => `<option value="${escHtml(r)}">`).join('');
+    }
+
+    function mostrarHistorial() {
+        const input = document.getElementById('carpetaInput');
+        const drop  = document.getElementById('historialDropdown');
+        const lista = document.getElementById('historialLista');
+        const todas = leerHistorial();
+        const filtro = input.value.trim().toLowerCase();
+        const items  = filtro
+            ? todas.filter(r => r.toLowerCase().includes(filtro))
+            : todas;
+
+        if (!items.length) { drop.classList.remove('visible'); return; }
+
+        lista.innerHTML = items.map((r, i) => `
+            <div class="historial-item" onclick="usarRuta(${i}, ${JSON.stringify(filtro ? items : todas)})">
+                <span class="hi-icon">&#128193;</span>
+                <span class="hi-path" title="${escHtml(r)}">${escHtml(r)}</span>
+                <button class="hi-del" onclick="eliminarRuta(event, '${escHtml(r)}')" title="Eliminar">&#10005;</button>
+            </div>`).join('');
+        drop.classList.add('visible');
+    }
+
+    function usarRuta(idx, lista) {
+        document.getElementById('carpetaInput').value = lista[idx];
+        document.getElementById('historialDropdown').classList.remove('visible');
+    }
+
+    function eliminarRuta(e, ruta) {
+        e.stopPropagation();
+        const nueva = leerHistorial().filter(r => r !== ruta);
+        localStorage.setItem(HISTORIAL_KEY, JSON.stringify(nueva));
+        renderDatalist();
+        mostrarHistorial();
+    }
+
+    function borrarHistorial(e) {
+        e.stopPropagation();
+        localStorage.removeItem(HISTORIAL_KEY);
+        renderDatalist();
+        document.getElementById('historialDropdown').classList.remove('visible');
+    }
+
+    // Cerrar el dropdown al hacer click fuera
+    document.addEventListener('click', e => {
+        const wrap = document.getElementById('carpetaInput')?.closest('.carpeta-input-wrap');
+        if (wrap && !wrap.contains(e.target))
+            document.getElementById('historialDropdown')?.classList.remove('visible');
+    });
+
+    // Inicializar datalist al cargar
+    renderDatalist();
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // CARPETA
+    // ─────────────────────────────────────────────────────────────────────────
+
+    // ── Switch Module ────────────────────────────────────────────────────────
+    function switchModule(mod, btn) {
+        document.querySelectorAll('.mod-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.module-view').forEach(v => v.classList.remove('active'));
+        
+        btn.classList.add('active');
+        document.getElementById('module-' + mod).classList.add('active');
+    }
+
+    async function escanearCarpeta() {
+        const carpeta = document.getElementById('carpetaInput').value.trim();
+        if (!carpeta) { toast('Ingresa la ruta de una carpeta', 'error'); return; }
+        document.getElementById('historialDropdown').classList.remove('visible');
+
+        disableBtn('btnCarpeta', '&#128269; Escaneando...');
+        disableBtn('btnExaminar', '&#128193; Examinar...');
+        showProcessing('Buscando PDFs y clasificando en paralelo...', 15);
+
+        try {
+            const resp = await fetch('/api/v1/quinta/clasificar-carpeta', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ carpeta })
+            });
+            setFill(90);
+            const data = await resp.json();
+
+            if (!resp.ok) {
+                const t = hideProcessing();
+                toast('Error: ' + (data.message || `HTTP ${resp.status}`), 'error');
+                return;
+            }
+
+            guardarRutaReciente(carpeta);
+            const t = hideProcessing();
+            mostrarResultados(data);
+
+            const n = data.resumen.exitosos;
+            const m = data.resumen.total_procesados;
+            const pdfs = data.total_pdfs_encontrados || m;
+            toast(`${n} clasificados de ${m} declaraciones (${pdfs} PDFs en ${t})`, 'ok');
+
+        } catch (e) {
+            hideProcessing();
+            toast('Error de red: ' + e.message, 'error');
+        } finally {
+            enableBtn('btnCarpeta');
+            enableBtn('btnExaminar');
+        }
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // RUTAS
+    // ─────────────────────────────────────────────────────────────────────────
+
+    function parsearRutas(texto) {
+        return texto.split('\n')
+            .map(l => l.trim().replace(/^["']|["']$/g, '').replace(/^--.*$/, '').trim())
+            .filter(l => l.length > 3);
+    }
+
+    function actualizarContador() {
+        const rutas = parsearRutas(document.getElementById('rutasInput').value);
+        const el = document.getElementById('rutaCounter');
+        el.innerHTML = rutas.length > 0
+            ? `<strong>${rutas.length}</strong> ruta(s) detectada(s)`
+            : '0 rutas detectadas';
+    }
+
+    function limpiarRutas() {
+        document.getElementById('rutasInput').value = '';
+        actualizarContador();
+    }
+
+    async function procesarPorRutas() {
+        const rutas = parsearRutas(document.getElementById('rutasInput').value);
+        if (!rutas.length) { toast('Ingresa al menos una ruta PDF', 'error'); return; }
+
+        disableBtn('btnRutas', 'Procesando...');
+        showProcessing(`Procesando ${rutas.length} ruta(s)...`, 15);
+
+        try {
+            const resp = await fetch('/api/v1/quinta/clasificar-rutas', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ rutas })
+            });
+            setFill(90);
+            const data = await resp.json();
+            if (!resp.ok) { const t = hideProcessing(); toast('Error: ' + (data.message || `HTTP ${resp.status}`), 'error'); return; }
+            const t = hideProcessing();
+            mostrarResultados(data);
+            toast(`${data.resumen.exitosos} clasificados en ${t}`, 'ok');
+        } catch (e) {
+            hideProcessing();
+            toast('Error: ' + e.message, 'error');
+        } finally {
+            enableBtn('btnRutas');
+        }
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // SUBIR ARCHIVOS
+    // ─────────────────────────────────────────────────────────────────────────
+
+    const uploadZone = document.getElementById('uploadZone');
+    const fileInput  = document.getElementById('fileInput');
+
+    uploadZone.addEventListener('dragover',  e => { e.preventDefault(); uploadZone.classList.add('dragover'); });
+    uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('dragover'));
+    uploadZone.addEventListener('drop', e => {
+        e.preventDefault();
+        uploadZone.classList.remove('dragover');
+        if (e.dataTransfer.files.length > 0) procesarArchivos(e.dataTransfer.files);
+    });
+    fileInput.addEventListener('change', () => { if (fileInput.files.length > 0) procesarArchivos(fileInput.files); });
+
+    async function procesarArchivos(files) {
+        const fd = new FormData();
+        let n = 0;
+        for (const f of files) { if (f.name.toLowerCase().endsWith('.pdf')) { fd.append('files', f); n++; } }
+        if (!n) { toast('No hay PDFs en los archivos seleccionados', 'error'); return; }
+
+        showProcessing(`Subiendo y procesando ${n} archivo(s)...`, 15);
+
+        try {
+            const resp = await fetch('/api/v1/quinta/clasificar', { method: 'POST', body: fd });
+            setFill(90);
+            const data = await resp.json();
+            const t = hideProcessing();
+            mostrarResultados(data);
+            toast(`${data.resumen.exitosos} clasificados en ${t}`, 'ok');
+        } catch (e) {
+            hideProcessing();
+            toast('Error: ' + e.message, 'error');
+        }
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // MOSTRAR RESULTADOS
+    // ─────────────────────────────────────────────────────────────────────────
+
+    function mostrarResultados(data) {
+        allResults  = data.resultados || [];
+        lastResumen = data.resumen    || {};
+        const r = lastResumen;
+
+        document.getElementById('statTotal').textContent = r.total_procesados || 0;
+        document.getElementById('stat1A').textContent    = (r.categorias || {})['1A'] || 0;
+        document.getElementById('stat1B').textContent    = (r.categorias || {})['1B'] || 0;
+        document.getElementById('stat2').textContent     = (r.categorias || {})['2']  || 0;
+        document.getElementById('stat3').textContent     = (r.categorias || {})['3']  || 0;
+        document.getElementById('statErr').textContent   = (r.errores || 0) + (r.sin_clasificar || 0);
+
+        document.getElementById('statsRow').classList.add('active');
+        document.getElementById('resultsSection').classList.add('active');
+        document.getElementById('legend').classList.add('active');
+
+        // Reset filter to All
+        document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+        document.querySelector('.chip').classList.add('active');
+        renderTabla(allResults);
+    }
+
+    function renderTabla(results) {
+        const tbody = document.getElementById('resultsBody');
+        if (!results.length) {
+            tbody.innerHTML = '<tr><td colspan="8" class="empty-state">Sin resultados para mostrar</td></tr>';
+            return;
+        }
+        tbody.innerHTML = results.map((r, i) => {
+            const cat  = r.categoria || '-';
+            const ok   = r.status === 'OK';
+            const warn = r.status === 'WARNING';
+            const bc   = ok ? `badge-${cat}` : (warn ? 'badge-warning' : 'badge-error');
+            const bt   = ok ? cat : (warn ? '??' : 'ERR');
+            const desc = r.categoria_info ? r.categoria_info.nombre : (r.mensaje || '-');
+            const conf = r.confianza || 0;
+            const cc   = conf >= 90 ? '#4CAF50' : conf >= 70 ? '#FF9800' : '#F44336';
+            const persona = r.persona || r.nombre || '-';
+            const nombre  = r.nombre  || '-';
+            const dniDoc  = r.dni_doc || '';
+            const dniNom  = r.dni_doc_nombre || '';
+            const dniArc  = r.dni_doc_archivo || '';
+            const dniPct  = r.dni_doc_puntaje != null ? Math.round(r.dni_doc_puntaje * 100) : null;
+            const dniCell = dniDoc
+                ? `<span class="dni-doc-num" title="${escHtml(dniNom)}${dniArc ? ' — ' + escHtml(dniArc) : ''}">${escHtml(dniDoc)}</span>`
+                : `<span style="color:#ddd;font-size:11px;">—</span>`;
+            return `<tr data-cat="${ok ? cat : (warn ? 'warn' : 'error')}">
+                <td style="color:#bbb;font-size:12px;">${i+1}</td>
+                <td class="persona-col">${escHtml(persona)}</td>
+                <td class="nombre-col">${escHtml(nombre)}</td>
+                <td><span class="badge ${bc}">${bt}</span></td>
+                <td style="font-size:12px;color:#666;">${escHtml(desc)}</td>
+                <td><div class="conf-bar">
+                    <div class="track"><div class="fill" style="width:${conf}%;background:${cc}"></div></div>
+                    <span class="pct">${conf}%</span>
+                </div></td>
+                <td style="font-size:12px;text-align:center;">${dniCell}</td>
+                <td style="font-size:11px;color:#bbb;" title="${escHtml(r.archivo||'')}">
+                    ${escHtml((r.archivo||'-').length > 28 ? '...' + (r.archivo||'').slice(-25) : r.archivo||'-')}
+                </td>
+            </tr>`;
+        }).join('');
+    }
+
+    function escHtml(s) {
+        return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+
+    function filtrar(cat, chip) {
+        document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+        chip.classList.add('active');
+        if (cat === 'all') renderTabla(allResults);
+        else               renderTabla(allResults.filter(r => getRowCat(r) === cat));
+    }
+
+    function getRowCat(r) {
+        if (r.status === 'OK')      return r.categoria;
+        if (r.status === 'WARNING') return 'warn';
+        return 'error';
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // EXPORTAR EXCEL
+    // ─────────────────────────────────────────────────────────────────────────
+
+    async function exportarExcel() {
+        if (!allResults.length) { toast('Sin datos para exportar', 'error'); return; }
+        disableBtn('btnExcel', 'Generando...');
+        try {
+            const resp = await fetch('/api/v1/quinta/exportar-excel', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ resultados: allResults, resumen: lastResumen })
+            });
+            if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+            const blob  = await resp.blob();
+            const cd    = resp.headers.get('Content-Disposition') || '';
+            const match = cd.match(/filename="?([^";\n]+)"?/);
+            const fname = match ? match[1] : `clasificacion_quinta_${new Date().toISOString().slice(0,10).replace(/-/g,'')}.xlsx`;
+            const url   = URL.createObjectURL(blob);
+            Object.assign(document.createElement('a'), { href: url, download: fname }).click();
+            URL.revokeObjectURL(url);
+            toast('Excel descargado', 'ok');
+        } catch (e) {
+            toast('Error al generar Excel: ' + e.message, 'error');
+        } finally {
+            enableBtn('btnExcel');
+        }
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // RESET
+    // ─────────────────────────────────────────────────────────────────────────
+
+    function resetTodo() {
+        allResults = []; lastResumen = {};
+        ['statsRow','resultsSection','legend'].forEach(id =>
+            document.getElementById(id).classList.remove('active'));
+        document.getElementById('carpetaInput').value = '';
+        document.getElementById('rutasInput').value   = '';
+        fileInput.value = '';
+        document.getElementById('statTime').textContent = '—';
+        actualizarContador();
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // TOAST
+    // ─────────────────────────────────────────────────────────────────────────
+
+    let _toastTimer;
+    function toast(msg, type = '') {
+        const t = document.getElementById('toast');
+        const icons = { ok: '✓ ', error: '✗ ', '': '' };
+        t.innerHTML = (icons[type] || '') + escHtml(msg);
+        t.className = `toast show ${type}`;
+        clearTimeout(_toastTimer);
+        _toastTimer = setTimeout(() => t.classList.remove('show'), 4000);
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // MÓDULO CARTAS OFERTA SHAREPOINT
+    // ─────────────────────────────────────────────────────────────────────────
+    function switchModule(mod, btn) {
+        document.querySelectorAll('.mod-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        document.querySelectorAll('.module-view').forEach(v => v.classList.remove('active'));
+        document.getElementById('module-' + mod).classList.add('active');
+    }
+
+    function switchTabOfertas(name, btn) {
+        document.querySelectorAll('#module-ofertas .method-tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('#module-ofertas .method-panel').forEach(p => p.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById('panel-' + name).classList.add('active');
+    }
+
+    async function simularProcesamientoSP() {
+        const terminal = document.getElementById('spTerminal');
+        const tbody = document.getElementById('spResultsBody');
+        const btn = document.getElementById('btnProcesarSP');
+        const origen = document.getElementById('spRutaOrigen').value;
+        const destino = document.getElementById('spRutaDestino').value;
+        
+        if (!origen || !destino) {
+            toast('Debe especificar ambas rutas', 'error');
+            return;
+        }
+
+        btn.disabled = true;
+        btn.innerHTML = '&#8987; Procesando en Backend...';
+        
+        terminal.innerHTML = `> [INFO] Iniciando conexión con sistema de archivos...<br>`;
+        terminal.innerHTML += `> [PATH] Origen: ${origen}<br>`;
+        terminal.innerHTML += `> [PATH] Destino: ${destino}<br>`;
+        
+        try {
+            const resp = await fetch('/api/v1/ofertas/procesar', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ origen, destino })
+            });
+            
+            const data = await resp.json();
+            
+            if (data.status === 'ERROR') {
+                terminal.innerHTML += `> [ERROR] ${data.message}<br>`;
+                toast(data.message, 'error');
+                return;
+            }
+
+            const resultados = data.resultados;
+            actualizarTablaOfertas(resultados);
+            toast('Procesamiento completado', 'ok');
+
+        } catch (e) {
+            terminal.innerHTML += `> [FATAL] Error de conexión: ${e.message}<br>`;
+            toast('Error de red al procesar', 'error');
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = '&#9654; Ejecutar Extracción y Clasificación Automática';
+        }
+    }
+
+    async function procesarArchivosSubidosOfertas(files) {
+        if (!files.length) return;
+        const terminal = document.getElementById('spTerminal');
+        const formData = new FormData();
+        for (const f of files) formData.append('files', f);
+
+        terminal.innerHTML = `> [UPLOAD] Subiendo ${files.length} archivos para triage manual...<br>`;
+        
+        try {
+            const resp = await fetch('/api/v1/ofertas/clasificar', {
+                method: 'POST',
+                body: formData
+            });
+            const data = await resp.json();
+            if (data.status === 'OK') {
+                actualizarTablaOfertas(data.resultados);
+                toast('Archivos procesados correctamente', 'ok');
+            } else {
+                terminal.innerHTML += `> [ERROR] ${data.message}<br>`;
+                toast(data.message, 'error');
+            }
+        } catch (e) {
+            terminal.innerHTML += `> [FATAL] Error en subida: ${e.message}<br>`;
+        }
+    }
+
+    async function procesarOfertasPorRutas() {
+        const routes = document.getElementById('spRutasInput').value.split('\n').filter(r => r.trim());
+        if (!routes.length) { toast('No hay rutas para procesar', 'error'); return; }
+        
+        const terminal = document.getElementById('spTerminal');
+        terminal.innerHTML = `> [RUTAS] Procesando ${routes.length} rutas específicas...<br>`;
+        
+        try {
+            const resp = await fetch('/api/v1/ofertas/procesar-rutas', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ rutas: routes })
+            });
+            const data = await resp.json();
+            if (data.status === 'OK') {
+                actualizarTablaOfertas(data.resultados);
+                toast('Rutas procesadas correctamente', 'ok');
+            } else {
+                terminal.innerHTML += `> [ERROR] ${data.message}<br>`;
+            }
+        } catch (e) {
+            terminal.innerHTML += `> [FATAL] Error: ${e.message}<br>`;
+        }
+    }
+
+    function actualizarTablaOfertas(resultados) {
+        const terminal = document.getElementById('spTerminal');
+        const tbody = document.getElementById('spResultsBody');
+        
+        window._lastOfertasResults = resultados; // Guardar para exportación
+        
+        if (resultados.length === 0) {
+            terminal.innerHTML += `> [INFO] No se encontraron datos válidos.<br>`;
+            tbody.innerHTML = '<tr><td colspan="6" class="empty-state">Sin resultados</td></tr>';
+            return;
+        }
+
+        let html = '';
+        let conBono = 0;
+        let regulares = 0;
+
+        for (const res of resultados) {
+            terminal.innerHTML += `> [SUCCESS] Procesada carta de: ${res.persona || res.archivo_origen}<br>`;
+            terminal.innerHTML += `> [OCR] Hallazgos: ${res.hallazgos.join(', ')}<br>`;
+            
+            const esBono = res.hallazgos.some(h => h.includes('Bono') || h.includes('Alimentaria') || h.includes('Movilidad'));
+            if (esBono) conBono++; else regulares++;
+
+            html += `
+                <tr>
+                    <td style="color:#bbb;font-size:11px;">${res.uuid || 'N/A'}</td>
+                    <td class="nombre-col">${res.archivo_origen}</td>
+                    <td>${res.hallazgos.map(h => `<span class="badge ${h === 'Contrato Regular' ? 'badge-1A' : 'badge-warning'}">${h}</span>`).join(' ')}</td>
+                    <td style="font-size:10px; color:#666;">${res.ruta_destino || 'Carga Directa'}</td>
+                    <td><span class="badge badge-1B">${res.estado || 'OK'}</span></td>
+                    <td style="font-size:10px; color:#888;">${res.timestamp || 'Hoy'}</td>
+                </tr>
+            `;
+        }
+
+        tbody.innerHTML = html;
+        document.getElementById('spProcesadas').textContent = resultados.length;
+        document.getElementById('spConBono').textContent = conBono;
+        document.getElementById('spRegulares').textContent = regulares;
+        terminal.innerHTML += `> [FINISH] Total: ${resultados.length} documentos.<br>`;
+        terminal.scrollTop = terminal.scrollHeight;
+    }
+
+    async function exportarExcelOfertas() {
+        if (!window._lastOfertasResults || !window._lastOfertasResults.length) {
+            toast('No hay datos para exportar', 'error');
+            return;
+        }
+        
+        const btn = document.getElementById('btnExcelOfertas');
+        btn.disabled = true;
+        btn.innerHTML = '&#8987; Generando...';
+        
+        try {
+            const resp = await fetch('/api/v1/ofertas/exportar-excel', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ resultados: window._lastOfertasResults })
+            });
+            
+            if (resp.ok) {
+                const blob = await resp.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `Reporte_Cartas_Oferta_${new Date().getTime()}.xlsx`;
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                toast('Excel generado con éxito', 'ok');
+            } else {
+                toast('Error al generar Excel', 'error');
+            }
+        } catch (e) {
+            toast('Error de red al exportar', 'error');
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = '&#128202; Exportar Excel';
+        }
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // DUAL (OFERTA + QUINTA)
+    // ─────────────────────────────────────────────────────────────────────────
+
+    let _dualTaskId = null;
+    let _dualPollInterval = null;
+    let _dualStartTime = null;
+
+    async function ejecutarProcesamientoDual() {
+        const origen = document.getElementById('dualRutaOrigen').value.trim();
+        const destino = document.getElementById('dualRutaDestino').value.trim();
+        
+        if (!origen || !destino) {
+            toast('Rutas origen y destino son requeridas', 'error');
+            return;
+        }
+
+        disableBtn('btnProcesarDual', '&#8987; Iniciando...');
+        
+        // Reset UI
+        document.getElementById('dualResultsBody').innerHTML = '';
+        document.getElementById('dualProgressContainer').style.display = 'block';
+        document.getElementById('dualResultsSection').style.display = 'block';
+        document.getElementById('dualProgressBar').style.width = '0%';
+        document.getElementById('dualProgressCount').textContent = 'Calculando...';
+        document.getElementById('dualProgressETA').textContent = '--:--';
+        
+        _dualStartTime = Date.now();
+
+        try {
+            const resp = await fetch('/api/v1/combinado/procesar', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ origen, destino })
+            });
+            const data = await resp.json();
+            
+            if (data.status === 'OK') {
+                _dualTaskId = data.task_id;
+                _dualPollInterval = setInterval(pollDualStatus, 1500);
+                toast('Motor dual iniciado con éxito', 'ok');
+            } else {
+                toast(data.message, 'error');
+                enableBtn('btnProcesarDual');
+            }
+        } catch (e) {
+            toast('Error al conectar con el servidor', 'error');
+            enableBtn('btnProcesarDual');
+        }
+    }
+
+    async function pollDualStatus() {
+        if (!_dualTaskId) return;
+
+        try {
+            const resp = await fetch(`/api/v1/combinado/status/${_dualTaskId}`);
+            const data = await resp.json();
+
+            if (data.status === 'RUNNING' || data.status === 'COMPLETED') {
+                updateDualUI(data);
+                
+                if (data.status === 'COMPLETED') {
+                    clearInterval(_dualPollInterval);
+                    _dualPollInterval = null;
+                    enableBtn('btnProcesarDual');
+                    toast('Procesamiento completado con éxito', 'ok');
+                    document.getElementById('dualProgressStatus').textContent = 'Finalizado';
+                    document.getElementById('dualProgressETA').textContent = '00:00';
+                }
+            } else if (data.status === 'ERROR') {
+                clearInterval(_dualPollInterval);
+                _dualPollInterval = null;
+                const errMsg = data.traceback
+                    ? data.message + '\n\n' + data.traceback
+                    : data.message;
+                console.error('[Dual ERROR]', errMsg);
+                toast('Error: ' + data.message, 'error');
+                enableBtn('btnProcesarDual');
+            }
+        } catch (e) {
+            console.error('Error polling status:', e);
+        }
+    }
+
+    function updateDualUI(data) {
+        const pct = data.total > 0 ? (data.current / data.total * 100) : 0;
+        document.getElementById('dualProgressBar').style.width = pct + '%';
+        document.getElementById('dualProgressCount').textContent = `${data.current} de ${data.total} colaboradores`;
+        document.getElementById('dualProgressPercent').textContent = Math.round(pct) + '% completado';
+        document.getElementById('dualProgressStatus').textContent = data.message;
+
+        // ETA Calculation
+        if (data.current > 0 && data.status === 'RUNNING') {
+            const elapsed = (Date.now() - _dualStartTime) / 1000;
+            const avgTimePerItem = elapsed / data.current;
+            const remaining = data.total - data.current;
+            const etaSeconds = Math.round(remaining * avgTimePerItem);
+            
+            const m = Math.floor(etaSeconds / 60);
+            const s = etaSeconds % 60;
+            document.getElementById('dualProgressETA').textContent = 
+                `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+        }
+
+        // Table Update
+        if (data.resultados && data.resultados.length > 0) {
+            actualizarTablaDual(data.resultados);
+        }
+    }
+
+    function actualizarTablaDual(resultados) {
+        const tbody = document.getElementById('dualResultsBody');
+        window._lastDualResults = resultados;
+
+        let html = '';
+        const sorted = [...resultados].reverse();
+        
+        for (const res of sorted) {
+            const statusBadge = res.estado === 'PROCESADO_OK' ? 'badge-1B' : 'badge-error';
+            const statusTxt = res.estado === 'PROCESADO_OK' ? 'MOVIDO OK' : res.estado;
+            
+            // Detalles de Quinta (si existen)
+            const q = res.quinta_detalle || {};
+            const cat = res.categoria || q.categoria || '-';
+            const conf = res.confianza_quinta || q.confianza || 0;
+            const catColor = (res.categoria_info || q.categoria_info || {}).color || '#999';
+            const catName = (res.categoria_info || q.categoria_info || {}).nombre || 'No detectada';
+
+            html += `
+                <tr>
+                    <td class="nombre-col">
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <span style="font-size:18px;">&#128100;</span>
+                            <div>
+                                ${res.persona}
+                                <div style="font-size:10px; color:#999; font-weight:normal;">Expediente Digital</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td style="text-align:center;">
+                        <span style="font-family:monospace; font-weight:800; color:#1a237e; background:#e8eaf6; padding:4px 8px; border-radius:4px; border: 1px solid #c5cae9; display: block;">
+                            ${res.dni || '<span style="color:#f44336; font-size:9px;">NO DETECTADO</span>'}
+                        </span>
+                    </td>
+                    <td style="text-align:center;">
+                        <span class="badge" style="background:${catColor}; color:white; font-size:11px; padding:4px 10px; border-radius:6px; min-width:40px;" title="${catName}">
+                            ${cat}
+                        </span>
+                    </td>
+                    <td>
+                        ${res.carta_oferta ? 
+                            `<div style="display:flex; align-items:center; gap:5px; color:#2e7d32; font-size:11px;">
+                                <span title="Carta Oferta Encontrada">&#9989;</span> ${res.carta_oferta}
+                             </div>` : 
+                            `<span style="color:#ef5350; font-size:11px;">&#10060; No encontrada</span>`}
+                    </td>
+                    <td>
+                        ${res.dj_quinta ? 
+                            `<div style="display:flex; align-items:center; gap:5px; color:#1a237e; font-size:11px;">
+                                <span title="DJ Quinta Encontrada">&#9989;</span> ${res.dj_quinta}
+                                <span style="color:#999; font-size:9px; margin-left:4px;">(${conf}%)</span>
+                             </div>` : 
+                            `<span style="color:#ef5350; font-size:11px;">&#10060; No encontrada</span>`}
+                    </td>
+                    <td style="text-align:center;"><span class="badge ${statusBadge}">${statusTxt}</span></td>
+                    <td style="font-size:10px; line-height:1.5;">
+                        ${(res.terminos_carta && res.terminos_carta.length > 0)
+                            ? `<div style="display:flex; flex-wrap:wrap; gap:3px;">
+                                ${res.terminos_carta.map(t => `<span class="badge-termino">${t}</span>`).join('')}
+                               </div>`
+                            : `<span style="color:#bdbdbd; font-size:10px; font-style:italic;">Sin términos</span>`
+                        }
+                    </td>
+                </tr>
+            `;
+        }
+        tbody.innerHTML = html;
+    }
+
+    async function exportarExcelDual() {
+        if (!window._lastDualResults || !window._lastDualResults.length) {
+            toast('No hay datos para exportar', 'error');
+            return;
+        }
+        
+        const resp = await fetch('/api/v1/quinta/exportar-excel', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                resultados: window._lastDualResults.map(r => {
+                    const q = r.quinta_detalle || {};
+                    const cat = r.categoria || q.categoria || '?';
+                    const catInfo = r.categoria_info || q.categoria_info || { nombre: 'No clasificado' };
+                    const conf = (r.confianza_quinta ?? q.confianza ?? 0);
+                    return {
+                        persona: r.persona,
+                        dni: r.dni || '-',
+                        nombre: q.nombre || r.persona,
+                        categoria: cat,
+                        categoria_info: catInfo,
+                        confianza: conf,
+                        archivo: r.dj_quinta || r.carta_oferta || '-',
+                        status: q.status || (r.estado === 'PROCESADO_OK' ? 'OK' : 'WARNING'),
+                        mensaje: r.mensaje || q.mensaje || '',
+                        terminos_carta: r.terminos_carta || []
+                    };
+                })
+            })
+        });
+        
+        if (resp.ok) {
+            const blob = await resp.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `Reporte_Dual_DNI_${new Date().getTime()}.xlsx`;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            toast('Excel generado con éxito', 'ok');
+        }
+    }
+
+    function cerrarDualResults() {
+        document.getElementById('dualResultsSection').style.display = 'none';
+        document.getElementById('dualProgressContainer').style.display = 'none';
+        enableBtn('btnProcesarDual');
+    }
+
+    async function abrirCarpetaLocal(idInput) {
+        const path = document.getElementById(idInput).value.trim();
+        if (!path) { toast('Ruta vacía', 'error'); return; }
+        try {
+            const resp = await fetch('/api/v1/utils/open-folder', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ path })
+            });
+            const data = await resp.json();
+            if (data.status !== 'OK') toast(data.message, 'error');
+        } catch (e) {
+            toast('Error al intentar abrir la carpeta', 'error');
+        }
+    }
+
+    async function seleccionarCarpetaNativa(idInput) {
+        try {
+            toast('Abriendo selector de carpetas...', '');
+            const resp = await fetch('/api/v1/utils/select-folder', { method: 'POST' });
+            const data = await resp.json();
+            if (data.status === 'OK') {
+                document.getElementById(idInput).value = data.path;
+                toast('Carpeta seleccionada correctamente', 'ok');
+            } else if (data.status === 'CANCEL') {
+                toast('Selección cancelada', '');
+            } else {
+                toast(data.message || 'Error al seleccionar carpeta', 'error');
+            }
+        } catch (e) {
+            toast('Error al conectar con el selector nativo', 'error');
+        }
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // MÓDULO F-118 DTP
+    // ─────────────────────────────────────────────────────────────────────────
+
+    let _f118Results = [];
+    let _f118Resumen = {};
+
+    async function procesarF118() {
+        const carpeta = document.getElementById('f118CarpetaInput').value.trim();
+        if (!carpeta) { toast('Ingresa la ruta de la carpeta con los datos', 'error'); return; }
+
+        disableBtn('btnF118Procesar', '&#9889; Extrayendo...');
+        document.getElementById('f118ProcessingBox').style.display = 'flex';
+        document.getElementById('f118ProcessingBox').classList.add('active');
+        document.getElementById('f118ProcessingFill').style.width = '20%';
+        document.getElementById('f118ProcessingLabel').textContent = 'Escaneando carpetas y leyendo archivos F-118...';
+
+        try {
+            const resp = await fetch('/api/v1/f118/procesar-carpeta', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ carpeta })
+            });
+            document.getElementById('f118ProcessingFill').style.width = '90%';
+            const data = await resp.json();
+
+            if (!resp.ok) {
+                toast('Error: ' + (data.message || `HTTP ${resp.status}`), 'error');
+                return;
+            }
+
+            _f118Results = data.resultados || [];
+            _f118Resumen = data.resumen || {};
+
+            // Stats
+            const r = _f118Resumen;
+            const cats = r.categorias || {};
+            document.getElementById('f118StatTotal').textContent = r.total || 0;
+            document.getElementById('f118StatOK').textContent = r.exitosos || 0;
+            document.getElementById('f118StatSin').textContent = r.sin_archivo || 0;
+            document.getElementById('f118StatErr').textContent = r.errores || 0;
+            document.getElementById('f118Stat1A').textContent = cats['1A'] || 0;
+            document.getElementById('f118Stat1B').textContent = cats['1B'] || 0;
+            document.getElementById('f118Stat2').textContent = cats['2'] || 0;
+            document.getElementById('f118Stat3').textContent = cats['3'] || 0;
+
+            document.getElementById('f118StatsRow').style.display = 'grid';
+            document.getElementById('f118ResultsSection').style.display = 'block';
+
+            // Hojas detectadas
+            const allHojas = new Set();
+            _f118Results.forEach(r => {
+                (r.hojas_detectadas || []).forEach(h => allHojas.add(h));
+            });
+            if (allHojas.size > 0) {
+                const colores = ['#00695c', '#1565c0', '#6a1b9a', '#e65100', '#2e7d32', '#c62828', '#4527a0', '#00838f'];
+                document.getElementById('f118HojasList').innerHTML =
+                    [...allHojas].map((h, i) => `<span style="background:${colores[i % colores.length]}; color:white; padding:3px 10px; border-radius:12px; font-size:11px; font-weight:600;">${escHtml(h)}</span>`).join('');
+                document.getElementById('f118HojasInfo').style.display = 'block';
+            }
+
+            renderTablaF118(_f118Results);
+            toast(`${r.exitosos} archivos procesados de ${r.total} personas`, 'ok');
+
+        } catch (e) {
+            toast('Error de red: ' + e.message, 'error');
+        } finally {
+            document.getElementById('f118ProcessingBox').style.display = 'none';
+            document.getElementById('f118ProcessingBox').classList.remove('active');
+            enableBtn('btnF118Procesar');
+        }
+    }
+
+    function renderTablaF118(results) {
+        const tbody = document.getElementById('f118ResultsBody');
+        if (!results.length) {
+            tbody.innerHTML = '<tr><td colspan="10" class="empty-state">Sin resultados</td></tr>';
+            return;
+        }
+
+        const COLOR_CAT = { '1A': '#2196F3', '1B': '#4CAF50', '2': '#FF9800', '3': '#F44336', '?': '#9E9E9E' };
+
+        tbody.innerHTML = results.map((r, i) => {
+            const res = r.resumen || {};
+            const fd = r.ficha_datos || {};
+            const ph = r.pago_haberes || {};
+            const q = r.ddjj_quinta || {};
+            const st = r.status || 'ERROR';
+            const nombre = res.nombre_completo || q.nombre_completo || '-';
+            const dni = res.dni || fd.dni || q.dni || '';
+            const correo = res.correo || fd.correo || '';
+            const distrito = res.distrito || fd.distrito || '';
+            const cat = q.categoria || '?';
+            const banco = ph.banco || '';
+            const hojas = (r.hojas_detectadas || []).length;
+
+            const statusBadge = st === 'OK' ? 'badge-1B' : (st === 'SIN_ARCHIVO' ? 'badge-warning' : 'badge-error');
+            const statusTxt = st === 'OK' ? '✓ OK' : (st === 'SIN_ARCHIVO' ? 'SIN F-118' : 'ERROR');
+            const catColor = COLOR_CAT[cat] || '#9E9E9E';
+            const errorTooltip = st === 'ERROR' ? ` title="${escHtml(r.mensaje || 'Error desconocido')}"` : '';
+            const statusCell = st === 'ERROR' ? `<span class="badge ${statusBadge}"${errorTooltip} style="cursor:help;">${statusTxt} ℹ️</span>` : `<span class="badge ${statusBadge}">${statusTxt}</span>`;
+
+            return `<tr>
+                <td style="color:#bbb;font-size:12px;">${i + 1}</td>
+                <td class="nombre-col" style="font-size:12px;">${escHtml(r.persona_carpeta || '-')}</td>
+                <td style="font-size:12px;">${escHtml(nombre)}</td>
+                <td style="text-align:center;">
+                    ${dni ? `<span style="font-family:monospace; font-weight:800; color:#1a237e; background:#e8eaf6; padding:3px 8px; border-radius:4px; border:1px solid #c5cae9;">${escHtml(dni)}</span>` : '<span style="color:#ddd;">—</span>'}
+                </td>
+                <td style="font-size:11px; color:#555;">${escHtml(correo)}</td>
+                <td style="font-size:12px;">${escHtml(distrito)}</td>
+                <td style="text-align:center;">
+                    <span class="badge" style="background:${catColor}; min-width:30px;">${cat}</span>
+                </td>
+                <td style="font-size:11px;">${escHtml(banco)}</td>
+                <td style="text-align:center; font-size:12px; color:#00695c; font-weight:700;">${hojas}</td>
+                <td>${statusCell}</td>
+            </tr>`;
+        }).join('');
+    }
+
+    async function exportarExcelF118() {
+        if (!_f118Results.length) { toast('Sin datos para exportar', 'error'); return; }
+        disableBtn('btnF118Excel', '&#8987; Generando...');
+        try {
+            const resp = await fetch('/api/v1/f118/exportar-excel', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ resultados: _f118Results, resumen: _f118Resumen })
+            });
+            if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+            const blob = await resp.blob();
+            const cd = resp.headers.get('Content-Disposition') || '';
+            const match = cd.match(/filename="?([^";\n]+)"?/);
+            const fname = match ? match[1] : `extraccion_f118_${new Date().toISOString().slice(0,10).replace(/-/g,'')}.xlsx`;
+            const url = URL.createObjectURL(blob);
+            Object.assign(document.createElement('a'), { href: url, download: fname }).click();
+            URL.revokeObjectURL(url);
+            toast('Excel F-118 descargado', 'ok');
+        } catch (e) {
+            toast('Error al generar Excel: ' + e.message, 'error');
+        } finally {
+            enableBtn('btnF118Excel');
+        }
+    }
+
+    function resetF118() {
+        _f118Results = []; _f118Resumen = {};
+        document.getElementById('f118StatsRow').style.display = 'none';
+        document.getElementById('f118ResultsSection').style.display = 'none';
+        document.getElementById('f118HojasInfo').style.display = 'none';
+        document.getElementById('f118CarpetaInput').value = '';
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // REINICIAR SISTEMA
+    // ─────────────────────────────────────────────────────────────────────────
+
+    async function reiniciarSistema() {
+        if (!confirm('¿Reiniciar el servidor? La página se recargará en 3 segundos.')) return;
+
+        toast('Reiniciando servidor...', '');
+
+        try {
+            await fetch('/api/v1/quinta/reiniciar', { method: 'POST' });
+        } catch (e) {
+            // El servidor se reinicia, es normal que falle la conexión
+        }
+
+        // Esperar y recargar la página
+        setTimeout(() => {
+            window.location.reload();
+        }, 3000);
+    }
+</script>
+</body>
+</html>
