@@ -253,6 +253,49 @@ if "%TESS_OK%"=="1" (
 echo.
 
 :: ===================================================================
+:: [6/6] Verificando Git
+:: ===================================================================
+echo [6/6] Verificando Git...
+set "GIT_OK=0"
+where git >nul 2>nul
+if not errorlevel 1 (
+    echo    OK    Git instalado
+    set "GIT_OK=1"
+) else (
+    echo    AVISO Git no encontrado. Intentando instalar automaticamente...
+    
+    where winget >nul 2>&1
+    if not errorlevel 1 (
+        echo    Intentando con winget id=Git.Git ...
+        winget install -e --id Git.Git --accept-source-agreements --accept-package-agreements --disable-interactivity >nul 2>&1
+    )
+    
+    where git >nul 2>nul
+    if not errorlevel 1 (
+        echo    OK    Git instalado automaticamente
+        set "GIT_OK=1"
+    ) else (
+        where choco >nul 2>&1
+        if not errorlevel 1 (
+            echo    Intentando con choco install git ...
+            choco install git -y --no-progress >nul 2>&1
+        )
+        
+        where git >nul 2>nul
+        if not errorlevel 1 (
+            echo    OK    Git instalado automaticamente
+            set "GIT_OK=1"
+        ) else (
+            echo    AVISO Git sigue sin instalarse.
+            echo    Sin Git no se podran recibir actualizaciones automaticas.
+            echo    Descargalo: https://git-scm.com/downloads
+            set /a ERRORES+=1
+        )
+    )
+)
+echo.
+
+:: ===================================================================
 :: Resultado final
 :: ===================================================================
 echo ===================================================================
@@ -265,6 +308,7 @@ if "%TESS_OK%"=="1" (
 )
 if "%TESS_LANG_ENG%"=="1" (echo    - Idioma eng: OK) else (echo    - Idioma eng: FALTA)
 if "%TESS_LANG_SPA%"=="1" (echo    - Idioma spa: OK) else (echo    - Idioma spa: FALTA)
+if "%GIT_OK%"=="1" (echo    - Git: OK) else (echo    - Git: FALTA)
 echo ===================================================================
 if !ERRORES! equ 0 (
     echo  LISTO -- Doble clic en INICIAR.vbs para arrancar el sistema.
