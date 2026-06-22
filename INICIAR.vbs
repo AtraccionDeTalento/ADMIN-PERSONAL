@@ -4,7 +4,7 @@
 ' ═══════════════════════════════════════════════════════════════════════
 Option Explicit
 
-Dim fso, shell, dir, pyExe, pyScript, installBat, rc
+Dim fso, shell, dir, pyExe, pyScript, installBat, updateBat, rc
 
 Set fso   = CreateObject("Scripting.FileSystemObject")
 Set shell = CreateObject("WScript.Shell")
