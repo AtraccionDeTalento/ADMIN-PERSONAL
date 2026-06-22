@@ -8,9 +8,16 @@ echo ===================================================
 where git >nul 2>nul
 if %errorlevel% neq 0 (
     echo [ADVERTENCIA] Git no esta instalado en este equipo.
-    echo No se pueden buscar actualizaciones automaticamente.
-    timeout /t 3 >nul
-    exit /b 1
+    echo Ejecutando INSTALAR.bat para configurar dependencias y Git...
+    call "%~dp0INSTALAR.bat"
+    
+    where git >nul 2>nul
+    if errorlevel 1 (
+        echo [ERROR] No se pudo instalar Git automaticamente.
+        echo No se pueden buscar actualizaciones automaticamente.
+        timeout /t 3 >nul
+        exit /b 1
+    )
 )
 
 :: Comprobar si es un repositorio Git
