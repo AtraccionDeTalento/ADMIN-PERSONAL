@@ -218,38 +218,45 @@ if "%TESS_OK%"=="1" (
     )
 )
 
-if "%TESS_OK%"=="1" (
-    echo    Verificando idiomas OCR (eng/spa)...
-    set "TESSDATA_DIR="
-    for %%P in ("%TESS_EXE%") do set "TESSDATA_DIR=%%~dpPtessdata"
+if not "%TESS_OK%"=="1" goto :TESS_LANG_DONE
 
-    "%TESS_EXE%" --list-langs 2>nul | findstr /i /r "^eng$" >nul
-    if errorlevel 1 (
-        echo    AVISO idioma eng no detectado en Tesseract.
-    ) else (
-        echo    OK    idioma eng detectado
-        set "TESS_LANG_ENG=1"
-    )
-    "%TESS_EXE%" --list-langs 2>nul | findstr /i /r "^spa$" >nul
-    if errorlevel 1 (
-        echo    AVISO idioma spa no detectado.
-        echo    Intentando descargar spa.traineddata...
-        if exist "!TESSDATA_DIR!" (
-            powershell -NoProfile -ExecutionPolicy Bypass -Command "try {Invoke-WebRequest -Uri 'https://github.com/tesseract-ocr/tessdata_fast/raw/main/spa.traineddata' -OutFile '!TESSDATA_DIR!\spa.traineddata' -UseBasicParsing; exit 0} catch {exit 1}" >nul 2>&1
-        )
-        "%TESS_EXE%" --list-langs 2>nul | findstr /i /r "^spa$" >nul
-        if errorlevel 1 (
-            echo    AVISO no se pudo agregar spa automaticamente. Instalar idioma espanol en Tesseract.
-            set /a ERRORES+=1
-        ) else (
-            echo    OK    idioma spa detectado
-            set "TESS_LANG_SPA=1"
-        )
-    ) else (
-        echo    OK    idioma spa detectado
-        set "TESS_LANG_SPA=1"
-    )
+echo    Verificando idiomas OCR (eng/spa)...
+set "TESSDATA_DIR="
+for %%P in ("%TESS_EXE%") do set "TESSDATA_DIR=%%~dpPtessdata"
+
+"%TESS_EXE%" --list-langs 2>nul | findstr /i /r "^eng$" >nul
+if not errorlevel 1 (
+    echo    OK    idioma eng detectado
+    set "TESS_LANG_ENG=1"
+) else (
+    echo    AVISO idioma eng no detectado en Tesseract.
 )
+
+"%TESS_EXE%" --list-langs 2>nul | findstr /i /r "^spa$" >nul
+if not errorlevel 1 (
+    echo    OK    idioma spa detectado
+    set "TESS_LANG_SPA=1"
+    goto :TESS_LANG_DONE
+)
+
+echo    AVISO idioma spa no detectado.
+echo    Intentando descargar spa.traineddata...
+if not exist "!TESSDATA_DIR!" goto :TESS_LANG_FAIL
+
+powershell -NoProfile -ExecutionPolicy Bypass -Command "try {Invoke-WebRequest -Uri 'https://github.com/tesseract-ocr/tessdata_fast/raw/main/spa.traineddata' -OutFile '!TESSDATA_DIR!\spa.traineddata' -UseBasicParsing; exit 0} catch {exit 1}" >nul 2>&1
+
+"%TESS_EXE%" --list-langs 2>nul | findstr /i /r "^spa$" >nul
+if not errorlevel 1 (
+    echo    OK    idioma spa detectado
+    set "TESS_LANG_SPA=1"
+    goto :TESS_LANG_DONE
+)
+
+:TESS_LANG_FAIL
+echo    AVISO no se pudo agregar spa automaticamente. Instalar idioma espanol en Tesseract.
+set /a ERRORES+=1
+
+:TESS_LANG_DONE
 echo.
 
 :: ===================================================================
@@ -261,38 +268,45 @@ where git >nul 2>nul
 if not errorlevel 1 (
     echo    OK    Git instalado
     set "GIT_OK=1"
-) else (
-    echo    AVISO Git no encontrado. Intentando instalar automaticamente...
-    
-    where winget >nul 2>&1
-    if not errorlevel 1 (
-        echo    Intentando con winget id=Git.Git ...
-        winget install -e --id Git.Git --accept-source-agreements --accept-package-agreements --disable-interactivity >nul 2>&1
-    )
-    
-    where git >nul 2>nul
-    if not errorlevel 1 (
-        echo    OK    Git instalado automaticamente
-        set "GIT_OK=1"
-    ) else (
-        where choco >nul 2>&1
-        if not errorlevel 1 (
-            echo    Intentando con choco install git ...
-            choco install git -y --no-progress >nul 2>&1
-        )
-        
-        where git >nul 2>nul
-        if not errorlevel 1 (
-            echo    OK    Git instalado automaticamente
-            set "GIT_OK=1"
-        ) else (
-            echo    AVISO Git sigue sin instalarse.
-            echo    Sin Git no se podran recibir actualizaciones automaticas.
-            echo    Descargalo: https://git-scm.com/downloads
-            set /a ERRORES+=1
-        )
-    )
+    goto :GIT_DONE
 )
+
+echo    AVISO Git no encontrado. Intentando instalar automaticamente...
+
+where winget >nul 2>&1
+if errorlevel 1 goto :GIT_CHOCO
+
+echo    Intentando con winget id=Git.Git ...
+winget install -e --id Git.Git --accept-source-agreements --accept-package-agreements --disable-interactivity >nul 2>&1
+
+where git >nul 2>nul
+if not errorlevel 1 (
+    echo    OK    Git instalado automaticamente
+    set "GIT_OK=1"
+    goto :GIT_DONE
+)
+
+:GIT_CHOCO
+where choco >nul 2>&1
+if errorlevel 1 goto :GIT_FAIL
+
+echo    Intentando con choco install git ...
+choco install git -y --no-progress >nul 2>&1
+
+where git >nul 2>nul
+if not errorlevel 1 (
+    echo    OK    Git instalado automaticamente
+    set "GIT_OK=1"
+    goto :GIT_DONE
+)
+
+:GIT_FAIL
+echo    AVISO Git sigue sin instalarse.
+echo    Sin Git no se podran recibir actualizaciones automaticas.
+echo    Descargalo: https://git-scm.com/downloads
+set /a ERRORES+=1
+
+:GIT_DONE
 echo.
 
 :: ===================================================================
@@ -310,10 +324,10 @@ if "%TESS_LANG_ENG%"=="1" (echo    - Idioma eng: OK) else (echo    - Idioma eng:
 if "%TESS_LANG_SPA%"=="1" (echo    - Idioma spa: OK) else (echo    - Idioma spa: FALTA)
 if "%GIT_OK%"=="1" (echo    - Git: OK) else (echo    - Git: FALTA)
 echo ===================================================================
-if !ERRORES! equ 0 (
-    echo  LISTO -- Doble clic en INICIAR.vbs para arrancar el sistema.
+if "%ERRORES%"=="0" (
+    echo  LISTO. Doble clic en INICIAR.vbs para arrancar el sistema.
 ) else (
-    echo  HAY !ERRORES! PROBLEMA(S) -- Revisa los errores arriba
+    echo  HAY %ERRORES% PROBLEMAS. Revisa los errores arriba
     echo  y vuelve a ejecutar INSTALAR.bat despues de corregirlos.
 )
 echo ===================================================================
