@@ -18,9 +18,9 @@ set "ERRORES=0"
 set "PY_CMD="
 
 :: ===================================================================
-:: [1/5] Python
+:: [1/6] Python
 :: ===================================================================
-echo [1/5] Verificando Python...
+echo [1/6] Verificando Python...
 python --version >nul 2>&1
 if errorlevel 1 (
     py -3 --version >nul 2>&1
@@ -46,9 +46,9 @@ echo    OK  Python %PYVER%
 echo.
 
 :: ===================================================================
-:: [2/5] Entorno virtual
+:: [2/6] Entorno virtual
 :: ===================================================================
-echo [2/5] Preparando entorno virtual...
+echo [2/6] Preparando entorno virtual...
 
 :: Leer pyvenv.cfg para detectar venv de otra PC SIN ejecutar python.exe
 :: (ejecutarlo con rutas incorrectas dispara un dialogo de error de Windows)
@@ -104,10 +104,10 @@ echo    OK  Entorno virtual creado
 echo.
 
 :: ===================================================================
-:: [3/5] Dependencias Python
+:: [3/6] Dependencias Python
 :: ===================================================================
 :INSTALAR_DEPS
-echo [3/5] Instalando dependencias...
+echo [3/6] Instalando dependencias...
 echo    flask, pymupdf, openpyxl, pytesseract, Pillow, werkzeug
 echo    Primera instalacion puede tardar 2-5 minutos...
 echo.
@@ -126,9 +126,9 @@ if errorlevel 1 (
 echo.
 
 :: ===================================================================
-:: [4/5] Verificacion de paquetes y archivos
+:: [4/6] Verificacion de paquetes y archivos
 :: ===================================================================
-echo [4/5] Verificando instalacion...
+echo [4/6] Verificando instalacion...
 
 "%DIR%\venv\Scripts\python.exe" -c "import flask"       >nul 2>&1
 if errorlevel 1 (echo    ERROR  flask           FALLA & set /a ERRORES+=1) else (echo    OK    flask)
@@ -152,9 +152,9 @@ if not exist "%DIR%\templates\quinta_categoria.html" (echo    ERROR  templates\q
 echo.
 
 :: ===================================================================
-:: [5/5] Tesseract OCR
+:: [5/6] Tesseract OCR
 :: ===================================================================
-echo [5/5] Verificando Tesseract OCR...
+echo [5/6] Verificando Tesseract OCR...
 set "TESS_OK=0"
 set "TESS_EXE="
 set "TESS_LANG_ENG=0"
